@@ -165,8 +165,8 @@ core.FrontEndExecutable = async (args, env) => {
     return ["Times", ...args];
   }
   
-  core.List = async function (args, env) {
-    var copy, e, i, len, list;
+  core.List = function (args, env) {
+    let copy, e, i, len, list;
     list = [];
   
     if (env.hold === true) {
@@ -183,7 +183,7 @@ core.FrontEndExecutable = async (args, env) => {
     for (i = 0, len = args.length; i < len; i++) {
       e = args[i];
 
-      list.push(await interpretate(e, copy));
+      list.push(interpretate(e, copy));
     }
 
     return list;
