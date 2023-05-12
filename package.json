@@ -1,0 +1,30 @@
+{
+  "name": "wljs-interpreter",
+  "version": "0.0.1",
+  "description": "A core library and WL interpreter written in pure JS",
+  "scripts": {
+
+  },
+  "wljs-meta": {
+    "js": [
+      "src/interpreter.js",
+      "src/core.js"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JerryI/wljs-interpreter"
+  },
+  "author": "Kirill Vasin",
+  "license": "GPL",
+  "bugs": {
+    "url": "https://github.com/JerryI/wljs-interpreter/issues"
+  },
+  "homepage": "https://github.com/JerryI/wljs-interpreter#readme",
+  "devDependencies": {
+
+  },
+  "dependencies": {
+
+  }
+}
