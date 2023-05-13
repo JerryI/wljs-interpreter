@@ -147,6 +147,16 @@ let server = {
     this.socket.send('NotebookEmitt[EmittedEvent["'+uid+'", '+data+']]');
   },
 
+  post: {
+    //for not it is raw association.
+    //it can be packed as normal FILEFORM!
+    emitt(uid, data) {
+      const p = new Deferred();
+      WSPHttpBigQuery('NotebookEmitt[EmittedEvent["'+uid+'", '+data+'], "'+window.Notebook+'"]', p);
+      return p.promise;
+    }
+  },
+
   //evaluate something on the secondary kernel (your working area) and make a promise for the reply
   askKernel(expr) {
     const uid = Date.now() + Math.floor(Math.random() * 100);

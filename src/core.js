@@ -165,6 +165,10 @@ core.FrontEndExecutable = async (args, env) => {
     return ["Times", ...args];
   }
   
+  core.EventListener = (args, env) => {
+    console.error('Event listener for general cases is not supported! Please, use it with Graphics or other packages');
+  }
+
   core.List = function (args, env) {
     let copy, e, i, len, list;
     list = [];
