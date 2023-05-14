@@ -164,6 +164,45 @@ core.FrontEndExecutable = async (args, env) => {
     //TODO: evaluate it before sending its original symbolic form
     return ["Times", ...args];
   }
+
+  core.Sin = function (args, env) {
+    if (env.numerical === true) return Math.sin(interpretate(args[0], env));
+    
+    //TODO: evaluate it before sending its original symbolic form
+    return ["Sin", ...args];    
+  }
+
+  core.Cos = function (args, env) {
+    if (env.numerical === true) return Math.cos(interpretate(args[0], env));
+    
+    //TODO: evaluate it before sending its original symbolic form
+    return ["Cos", ...args];    
+  }  
+
+  core.Tuples = async (args, env) => {
+    const array = await interpretate(args[0], env);
+    const subsetSize = interpretate(args[1], env);
+
+    const result = [];
+  
+    function generateSubsets(index, currentSubset) {
+      if (currentSubset.length === subsetSize) {
+        result.push(currentSubset);
+        return;
+      }
+  
+      for (let i = 0; i < array.length; i++) {
+        generateSubsets(i, [...currentSubset, array[i]]);
+      }
+    }
+  
+    generateSubsets(0, []);
+  
+    return result;
+  }  
+
+  core.Tuples.update = core.Tuples;
+  core.Tuples.destroy = (args, env) => { interpretate(args[0], env) }
   
   core.EventListener = (args, env) => {
     console.error('Event listener for general cases is not supported! Please, use it with Graphics or other packages');
@@ -200,17 +239,7 @@ core.FrontEndExecutable = async (args, env) => {
     }
   };
   
-  core.List.update = async (args, env) => {
-    var copy, e, i, len, list;
-    list = [];
-  
-    copy = Object.assign({}, env);
-    for (i = 0, len = args.length; i < len; i++) {
-      e = args[i];
-      list.push(await interpretate(e, copy));
-    }
-    return list;
-  };
+  core.List.update = core.List;
   
   core.Association = function (args, env) {
     return core._getRules(args, env);

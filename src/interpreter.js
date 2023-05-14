@@ -56,8 +56,8 @@ var interpretate = (d, env = {}) => {
       if ('virtual' in env.context[name]) {
         const obj = new ExecutableObject('virtual-'+uuidv4(), env, d);
         let virtualenv = obj.assignScope();
-        console.log('virtual env');
-        console.log(virtualenv);
+        //console.log('virtual env');
+        //console.log(virtualenv);
         return env.context[name](args, virtualenv);    
       }
 
@@ -82,8 +82,8 @@ var interpretate = (d, env = {}) => {
       if ('virtual' in c[i][name]) {
         const obj = new ExecutableObject('virtual-'+uuidv4(), env, d);
         let virtualenv = obj.assignScope();
-        console.log('virtual env');
-        console.log(virtualenv);        
+        //console.log('virtual env');
+        //console.log(virtualenv);        
         return c[i][name](args, virtualenv);    
       }     
 
@@ -291,8 +291,8 @@ class ExecutableObject {
     //pass local scope
     this.env.local = this.local;
     console.log('interpreting the content of '+this.uid+'....');
-    console.log('content');
-    console.log(content);
+    //console.log('content');
+    //console.log(content);
     return interpretate(content, this.env);
   }
 
@@ -345,7 +345,7 @@ class ExecutableObject {
     console.log('constructing the instance of '+uid+'...');
     
     this.uid = uid;
-    this.env = env;
+    this.env = {...env};
     
     this.instance = Date.now() + Math.floor(Math.random() * 100);
     
@@ -361,7 +361,7 @@ class ExecutableObject {
     if (virtual) {
       console.log('virtual object detected!');
       console.log('local storage is enabled');
-      console.log(virtual);
+      //console.log(virtual);
       this.virtual = virtual;
     } else {
       if (uid in ObjectHashMap) this.storage = ObjectHashMap[uid]; else this.storage = new ObjectStorage(uid);
