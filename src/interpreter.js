@@ -91,7 +91,10 @@ var interpretate = (d, env = {}) => {
     }
   };
 
-  console.error('symbol '+name+' is undefined in any contextes available');
+  console.warning('Symbol '+name+' is undefined in any contextes available. Asking kernel...');
+  console.warning('Heavy usage of Kernel functions might lead to slow-down. Please consider to use native expressions available on the frontend.');
+
+  return (interpretate.anonymous(d, env));
 };
 
 //contexes, so symbols names might be duplicated, therefore one can specify the propority context in env variable
@@ -100,6 +103,37 @@ interpretate.contextes = [];
 interpretate.contextExpand = (context) => {
   console.log(context.name + ' was added to the contextes of the interpreter');
   interpretate.contextes.push(context);
+}
+
+interpretate.anonymous = (d, org) => {
+  server.askKernel(`ImportString["${JSON.stringify(d)}", "JSONExpression"]`)
+  //extend core's functions
+  const name = d[0];
+
+  core[name] = async (args, env) => {
+    const pack = [name, ...args];
+    //in a case if we want to track this symbol and call .update method on a virtual function
+    env.local.trackerId = server.addTracker(name, env.root.instance);
+
+    return server.askKernel(`ImportString["${JSON.stringify(pack)}", "JSONExpression"]`)
+  }
+
+  core[name].update = (args, env) => {
+    console.error('updading anonymous symbols is not possble');
+  }
+
+  core[name].destroy = (args, env) => {
+    //THIS WILL NEVER WORK. TODO
+    console.log('anonymous symbols was destroyed');
+    console.error('nobody knows the instance assigned to it ;(');
+    console.log(env.local);
+    server.removeTracker(env.local.trackerId);
+  }  
+
+  core[name].virtual = true;
+
+  //reevaluate it again
+  return interpretate(d, env);
 }
 
 //Server API
@@ -164,7 +198,7 @@ let server = {
     const promise = new Deferred();
     this.promises[uid] = promise;
     //not implemented
-    console.error('askKernel is not implemented');
+    //console.error('askKernel is not implemented');
     this.socket.send('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
     
     return promise.promise    
@@ -177,6 +211,10 @@ let server = {
 
   clearObject(uid) {
     this.socket.send('NotebookGarbagePut["'+uid+'"];');
+  },
+
+  addTracker(name, virtualInstance) {
+    console.error('tracking feature is not implemented');
   }
 }
  
@@ -184,6 +222,7 @@ let server = {
 
 
 var ObjectHashMap = {}
+var InstancesHashMap = {}
 
 let garbageTimeout = false;
 
@@ -318,6 +357,8 @@ class ExecutableObject {
     this.env.local = this.local;    
     //the link between objects will be dead automatically
     interpretate(content, this.env);
+
+    delete InstancesHashMap[this.instance];
   }
   
   //update the state of it and recompute all objects inside
@@ -327,7 +368,12 @@ class ExecutableObject {
     //bubble up (only by 1 level... cuz some BUG, but can still work even with this limitation)
     if (this.parent instanceof ExecutableObject && !(this.child instanceof ExecutableObject)) return this.parent.update(); 
     
-    if (this.virtual) console.log('virtual type');
+    if (this.virtual) {
+      console.log('update virtual type');
+      console.log('here we might have a change to detect, if there is no link to other FE, i.e. our object is dead');
+      //commit suicide because we alone ;(
+      //this.destroy();
+    }
 
     //change the method of interpreting 
     this.env.method = 'update';
@@ -336,7 +382,8 @@ class ExecutableObject {
     console.log('interprete...'+this.uid);
 
     let content;
-    if (!this.virtual) content = this.storage.get(this.uid); else content = this.virtual;
+    if (!this.virtual) 
+      content = this.storage.get(this.uid); else content = this.virtual;
 
     return interpretate(content, this.env);
   }
@@ -376,6 +423,8 @@ class ExecutableObject {
     }
     
     this.env.root = this;
+
+    InstancesHashMap[this.instance] = this;
     return this;
   }  
 };
@@ -420,4 +469,30 @@ function openawindow(url, target='_self') {
   fake.target = target;
   fake.href = url;
   fake.click();
+}
+
+// Throttle function: Input as function which needs to be throttled and delay is the time interval in milliseconds
+function throttle(cb, delay = 300) {
+    let shouldWait = false
+    let waitingArgs
+    const timeoutFunc = () => {
+      if (waitingArgs == null) {
+        shouldWait = false
+      } else {
+        cb(...waitingArgs)
+        waitingArgs = null
+        setTimeout(timeoutFunc, delay)
+      }
+    }
+  
+    return (...args) => {
+      if (shouldWait) {
+        waitingArgs = args
+        return
+      }
+  
+      cb(...args)
+      shouldWait = true
+      setTimeout(timeoutFunc, delay)
+    }
 }

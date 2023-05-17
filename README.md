@@ -233,6 +233,11 @@ More about `env` object is here [Meta Data](#Meta%20Data).
 
 In the same manner the separation between `Line[]` used in `Graphics3D` and in `Graphics` functions was made.
 
+### External or anonymous functions 
+If the called expression was not found in all available contextes, the interpreter will extend `core` with a server-call, i.e. ask kernel to evaluate the unknown symbol and return back the result.
+
+By the default those special missing expressions becomes in the end virtual containers and can call `update` method on other containerized functions.
+
 ### Meta Data
 To share some data between functions, to use local and global memory of the executable objects, specifying methods of evaluation and DOM access the following object is provided
 
@@ -251,6 +256,8 @@ env = {
 	numerical: false,          /* keep symbolic or not */
 	hold: false                /* keep exps in a List  */
 	/* anything you want to share */
+
+	root: /* a reference to the FrontEndObject container */
 	...
 }
 ```
@@ -326,3 +333,21 @@ core.Canvas = (args, env) => {
 
 - `env.global` is visible to all `FrontEndExecutable` and its inner WL expressions, where `env.global.stack` contains the call-tree
 - `env.local` is isolated memeory related to individual `FrontEndExecutable` or virtual functios.
+
+### Meta-markers
+Suitable for locating an exact instance of frontend object to execute an arbitary function in its container.
+
+### Supported WL expressions
+
+- `List`
+- `True`
+- `False`
+- `Power`
+- `Plus`
+- `Rational`
+- `Times`
+- `Sin`
+- `Cos`
+- `Tuples`
+- `Rule`
+- `Association`

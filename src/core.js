@@ -141,6 +141,10 @@ core.FrontEndExecutable = async (args, env) => {
   core.FrontEndOnly.destroy = (args, env) => {
     interpretate(args[0], env);
   };
+
+  core.FHold = core.FrontEndOnly;
+  //AHHAHAHAH
+  core.Hold = core.FrontEndOnly;
   
   core.Power = (args, env) => {
     if (!env.numerical) return ["Power", ...args];
@@ -150,6 +154,11 @@ core.FrontEndExecutable = async (args, env) => {
   
     return Math.pow(val,p);
   }
+
+  core.Plus = (args, env) => {
+    if (!env.numerical) return ["Plus", ...args];
+    return interpretate(args[0], env) + interpretate(args[1], env);
+  }  
   
   core.Rational = function (args, env) {
     if (env.numerical === true) return interpretate(args[0], env)/interpretate(args[1], env);
@@ -258,3 +267,9 @@ core.FrontEndExecutable = async (args, env) => {
   core.Function = (args, env) => {
     //void
   }
+
+  core.$Failed = (args, env) => {
+    console.error('$Failed encountered');
+  }
+
+  

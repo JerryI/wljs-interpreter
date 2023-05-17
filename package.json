@@ -8,8 +8,11 @@
   "wljs-meta": {
     "js": [
       "src/interpreter.js",
-      "src/core.js"
-    ]
+      "src/core.js",
+      "src/metamarkers.js"
+    ],
+
+    "autocomplete": "src/autocomplete.js"
   },
   "repository": {
     "type": "git",
