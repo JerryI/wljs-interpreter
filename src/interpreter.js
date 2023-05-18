@@ -106,6 +106,11 @@ interpretate.contextExpand = (context) => {
 }
 
 interpretate.anonymous = (d, org) => {
+  //TODO Check if it set delayed or set... if set, then one need only to cache it
+  if (!server.socket) {
+    console.error('Symbol '+name+' is undefined in any contextes available. Communication with Wolfram Kernel is not possible for now.');
+  }
+
   server.askKernel(`ImportString["${JSON.stringify(d)}", "JSONExpression"]`)
   //extend core's functions
   const name = d[0];
@@ -139,7 +144,7 @@ interpretate.anonymous = (d, org) => {
 //Server API
 let server = {
   promises : {},
-  socket: {},
+  socket: false,
   
   init(socket) {
     this.socket = socket;

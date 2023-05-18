@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sandbox for WLJS</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
+  <style>
+    .code-output {
+      width: 100%;
+      height: 200px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="text-center">Sandbox for WLJS</h1>
+
+    <div class="row mt-5">
+      <div class="col-md-6">
+        <h2>Input Form WL</h2>
+        <textarea id="code-input" class="form-control code-input" placeholder="Enter your Mathematica code here">
+ClearDOM["canvas"];
+
+CreateFrontEndObject[{{0,0},{1,1}}, "point"];
+(* to be able to animate we need a container *)
+CreateFrontEndObject[{
+	(* attach a dom element to draw *)
+    AttachDOM["canvas"],
+    
+    (* our graphics *)
+    Graphics[{PointSize[0.1], Point[FrontEndRef["point"]]}, "TransitionDuration"->1000, "ViewBox"->{0,0,700,700}]
+}, "graph"];
+
+(* let's execute! *)
+FrontEndExecutable["graph"];
+
+Pause[1];
+(* animate the points *)
+SetFrontEndObject["point", {{-1,0},{1,0}}];
+        </textarea>
+        <h2>Input Form JS</h2>
+        <textarea id="code-input-js" class="form-control code-input" placeholder="Enter your JS code here">
+const main = document.getElementById('dom-canvas');
+
+core.ClearDOM = async (args, env) => {
+	const key = interpretate(args[0], env);
+  	const old = document.getElementById(key);
+  	if (old) old.remove();
+  
+    let el = document.createElement('div');
+  	el.id = key;
+	
+  	main.appendChild(el);
+  	return null;
+}
+
+return '';
+        
+        
+        
+        </textarea>        
+      </div>
+
+      <div class="col-md-6">
+        <h2>Console</h2>
+        <textarea id="code-output" class="form-control code-output" cols="50" rows="15" readonly></textarea>
+        <h2>JS Output</h2>
+        <div id="dom-canvas" class="form-control code-output"><span></span></div>
+      </div>
+    </div>
+
+    <div class="row mt-3">
+      <div class="col-md-12 text-center">
+        <!--<button class="btn btn-primary" onclick="runExampleCode()">Clear</button>-->
+      </div>
+    </div>
+  </div>
+  <script><?wsp Import[FileNameJoin[{"src", "interpreter.js"}], "String"] ?></script>
+  <script><?wsp Import[FileNameJoin[{"src", "core.js"}], "String"] ?></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/mathematica/mathematica.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/javascript/javascript.min.js"></script>
+
+  <script type="module" src="https://cdn.jsdelivr.net/gh/JerryI/wljs-graphics-d3@main/dist/kernel.js"></script>
+
+  <script src="socket.js"></script>
+  <script>
+    var test;
+    // Initialize CodeMirror on the input textarea
+    const codeInput = CodeMirror.fromTextArea(document.getElementById('code-input'), {
+      mode: 'mathematica',
+      lineNumbers: true,
+      theme: 'default',
+      extraKeys: {
+        "Shift-Enter": function(instance) { 
+      
+            server.socket.send(`runCode["${instance.getValue().replace(/(\r\n|\n|\r)/gm, "").replaceAll('\\\"', '\\\\\"').replaceAll('\"', '\\"')}"]`);
+        },
+      } 
+    });
+    
+    function isElement(o) {
+        return (
+        typeof HTMLElement === "object" ? o instanceof HTMLElement : //DOM2
+        o && typeof o === "object" && o !== null && o.nodeType === 1 && typeof o.nodeName==="string"
+    )};
+
+    function ec(val) {
+        const ca = document.getElementById("dom-canvas");
+        const result = eval('(function () {'+val+'})()');
+
+        if (ca.firstChild) ca.firstChild.remove();
+
+        if (isElement(result)) {
+            ca.innerHTML = '';
+            ca.appendChild(result);
+        } else {
+            if (result) ca.innerHTML = JSON.stringify(result); else ca.innerHTML = '';
+        }
+    }
+
+    const codeInputJS = CodeMirror.fromTextArea(document.getElementById('code-input-js'), {
+      mode: 'javascript',
+      lineNumbers: true,
+      theme: 'default',
+      extraKeys: {
+        "Shift-Enter": function(instance) {
+            ec(instance.getValue());
+        },
+      } 
+    });    
+
+    ec(codeInputJS.getValue());
+
+    function checkTextareaHeight() {
+        var textarea = document.getElementById('code-output');
+        if(textarea.selectionStart == textarea.selectionEnd) {
+            textarea.scrollTop = textarea.scrollHeight;
+        }
+    }
+    // Function to capture console output and display it in the output textarea
+    function captureConsoleOutput() {
+      const codeOutput = document.getElementById('code-output');
+
+      console.log = function(message) {
+        codeOutput.value += message + '\n';
+        checkTextareaHeight();
+      }
+
+      
+    }
+
+    // Call the updateOutputForm and captureConsoleOutput functions when the page is loaded
+    window.onload = function() {
+
+      captureConsoleOutput();
+    };
+
+  </script>
+</body>
+</html>

@@ -10,32 +10,12 @@ It includes two pars
 - `interpeter.js` - function that executes the commands
 - `core.js` - core library (support for `List`, `Rule` and etc...)
 
-## Example
-it executes the defined expressions in `core` context and obtains the result as native JS primitive
-
-```js
-> interpretate(
-	["List",1,2,3,["Times",2,2]], {numerical: true})
-
-> [1,2,3,4]
+## Examples
+You need to have `wolframscript` installed
+```bash
+cd wljs-interpreter
+wolframscript -f serve.wls
 ```
-
-To define a symbol/expression you can extend the default context `core` using the following boilerplate code
-
-```js
-core.MultiplyAllElements = (args, env) => {
-    const data = interpretate(args[0], {...env, numerical: true});
-    return data.reduce((a, b)=> a*b)
-}
-```
-and calling it from WL expression directly
-
-```mathematica
-> interpretate(["MultiplyAllElements", ["List", 1, 2, 3, ["Times", 2, 2]]]
-> 24
-```
-
-Therefore taking this simple approach, one can recreate and expand Wolfram Engine / Mathematica's functionality even beyong the notebook interface.
 
 ## The idea
 
@@ -234,7 +214,7 @@ More about `env` object is here [Meta Data](#Meta%20Data).
 In the same manner the separation between `Line[]` used in `Graphics3D` and in `Graphics` functions was made.
 
 ### External or anonymous functions 
-If the called expression was not found in all available contextes, the interpreter will extend `core` with a server-call, i.e. ask kernel to evaluate the unknown symbol and return back the result.
+If the called expression was not found in all available contextes, the interpreter will extend `core` with a server-call, i.e. __will ask kernel to evaluate the unknown symbol and return back the result__.
 
 By the default those special missing expressions becomes in the end virtual containers and can call `update` method on other containerized functions.
 
@@ -351,3 +331,17 @@ Suitable for locating an exact instance of frontend object to execute an arbitar
 - `Tuples`
 - `Rule`
 - `Association`
+- `CompoundExpression`
+- `Pause`
+- `While`
+
+### Extra features (helper functions)
+- `FrontEndRef[uid]` - inactive reference to the frontend object
+- `SetFrontEndObject[uid, data]` - update the content of frontend object
+- `FlipFrontEndObjects[uid1, uid2]` - exchange two frontend objects and fire an update methods on both
+
+- `MetaMarker` - create a marker to mark an instance of frontend object
+- `FindMetaMarker` - find the instance by the marker
+- `_typeof` - returns the type of the object
+- `_getRules` - scan provided options from the argument and return them as association
+- `FireEvent` - fires an event with defined uid and data

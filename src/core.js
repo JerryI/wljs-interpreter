@@ -123,6 +123,23 @@ core.FrontEndExecutable = async (args, env) => {
     const key = interpretate(args[0], env);
     ObjectHashMap[key].update(args[1]);
   }
+
+  core.CreateFrontEndObject = function (args, env) {
+    const key = interpretate(args[1], env);
+
+    const ob =  new ObjectStorage(key); 
+    ob.cached = true; 
+    ob.cache = args[0];
+  }  
+
+  core.FlipFrontEndObjects = async function (args, env) {
+    const key1 = interpretate(args[0], env);
+    const key2 = interpretate(args[1], env);
+
+    const clone = structuredClone(await ObjectHashMap[key1].get());
+    ObjectHashMap[key1].update(await ObjectHashMap[key2].get());
+    ObjectHashMap[key2].update(clone);
+  }
   
   core.FrontEndExecutableHold = core.FrontEndExecutable;
   //to prevent codemirror 6 from drawing it
@@ -272,4 +289,60 @@ core.FrontEndExecutable = async (args, env) => {
     console.error('$Failed encountered');
   }
 
+  core.Pause = async (args, env) => {
+    const time = 1000*interpretate(args[0], env);
+
+    return new Promise(resolve => {
+      setTimeout(() => {
+        console.log("Finished Inner Timeout")
+        resolve('resolved');
+      }, time);
+    })  
+  }
+
+  core.CompoundExpression = async (args, env) => {
+    //sequential execution
+    let content;
+
+    for (const expr of args) {
+      content = await interpretate(expr, env);
+    }
+
+    return content;
+  }
+
+  core.While = async (args, env) => {
+    //sequential execution
+    const condition = await interpretate(args[0], env);
+    console.log('condition: ' + condition);
+    if (condition) {
+      await interpretate(args[1], env);
+      await interpretate(['While', ...args], env);
+    }
+  } 
+  
+  
+  core.Alert = (args, env) => {
+    alert(interpretate(args[0], env));
+  }
+
+  core.Print = (args, env) => {
+    console.log('Out:\t'+JSON.stringify(interpretate(args[0], env)));
+  }  
+
+  core.N = (args, env) => {
+    const copy = {...env, numerical: true};
+    return interpretate(args[0], copy);
+  }
+
+  core.AttachDOM = (args, env) => {
+    //used to attach dom element to the containirized function
+    if (!env.root) {
+      console.warning('Using AttachDOM on pure function is not recommended. Consider to use virtual or real containers instead!');
+    }
+
+    const id = interpretate(args[0], env);
+    env.element = document.getElementById(id);
+    return id;
+  }
   

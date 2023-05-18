@@ -22,7 +22,7 @@ window.EditorAutocomplete.extend([
     {
         "label":"CreateFrontEndObject",
         "type":"keyword",
-        "info":"CreateFrontEndObject[expr, \"uid\"] define a sharable object"
+        "info":"[Both] CreateFrontEndObject[expr, \"uid\"] define a sharable object"
     },      
     {
         "label":"MetaMarker",
@@ -93,7 +93,23 @@ window.EditorAutocomplete.extend([
         "label": "SetFrontEndObject",
         "type": "keyword",
         "info": "[Frontend Only] SetFrontEndObject[uid, data] Assign a new value to frontend object with name"  
-    }     
+    },
+    {
+        "label": "FlipFrontEndObjects",
+        "type": "keyword",
+        "info": "[Frontend Only] FlipFrontEndObjects[uid1, uid2] flip two frontend object and fires update method on each"          
+    },
+    {
+        "label": "Alert",
+        "type": "keyword",
+        "info": "[Frontend Only] Alert[message] make a popup window with a message provided"          
+    },
+
+    {
+        "label": "AttachDOM",
+        "type": "keyword",
+        "info": "[Frontend Only] AttachDOM[DOMid] attach the DOM id to the context"          
+    },    
 
 ])
 
