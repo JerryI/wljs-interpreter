@@ -102,6 +102,7 @@ core.FrontEndExecutable = async (args, env) => {
   
   core.PromiseResolve = (args, env) => {
     const uid = interpretate(args[0], env);
+    console.log('promise resolved!');
     server.promises[uid].resolve(args[1]);
     delete server.promises[uid];
   }
@@ -117,7 +118,14 @@ core.FrontEndExecutable = async (args, env) => {
     //no need anymore
     console.log('garbage removed');
   }
-  
+
+  core.FrontEndVirtual = (args, env) => {
+    console.log('virtual function was created');
+    const obj = new ExecutableObject('virtual-'+uuidv4(), env, args[0]);
+    let virtualenv = obj.assignScope();
+
+    return interpretate(args[0], virtualenv);
+  }
   
   core.SetFrontEndObject = function (args, env) {
     const key = interpretate(args[0], env);
@@ -139,6 +147,11 @@ core.FrontEndExecutable = async (args, env) => {
     const clone = structuredClone(await ObjectHashMap[key1].get());
     ObjectHashMap[key1].update(await ObjectHashMap[key2].get());
     ObjectHashMap[key2].update(clone);
+  }
+
+  core.Unsafe = async function (args, env) {
+    env.unsafe = true;
+    return await interpretate(args[0], env);
   }
   
   core.FrontEndExecutableHold = core.FrontEndExecutable;
@@ -326,8 +339,8 @@ core.FrontEndExecutable = async (args, env) => {
     alert(interpretate(args[0], env));
   }
 
-  core.Print = (args, env) => {
-    console.log('Out:\t'+JSON.stringify(interpretate(args[0], env)));
+  core.Print = async (args, env) => {
+    console.log('Out:\t'+JSON.stringify(await interpretate(args[0], env)));
   }  
 
   core.N = (args, env) => {
@@ -338,7 +351,7 @@ core.FrontEndExecutable = async (args, env) => {
   core.AttachDOM = (args, env) => {
     //used to attach dom element to the containirized function
     if (!env.root) {
-      console.warning('Using AttachDOM on pure function is not recommended. Consider to use virtual or real containers instead!');
+      console.warn('Using AttachDOM on pure function is not recommended. Consider to use virtual or real containers instead!');
     }
 
     const id = interpretate(args[0], env);

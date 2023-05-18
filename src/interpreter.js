@@ -19,16 +19,22 @@ var interpretate = (d, env = {}) => {
     console.log('undefined object');
     return d;
   }
-  if (typeof d === 'string') {
+
+  const stringQ = typeof d === 'string';
+
+  //real string
+  if (stringQ) {
     if (d.charAt(0) == "'") return d.slice(1, -1);
-    return d;
+    //in safe mode just convert unknown symbols into a string
+    if (!env.unsafe) return d;
+    //if not. it means this is a symbol
   }
   if (typeof d === 'number') {
     return d; 
   }
 
-  //if not a JSON array, probably a promise object
-  if (!(d instanceof Array)) return d;
+  //if not a JSON array, probably a promise object or a function
+  if (!(d instanceof Array) && !stringQ) return d;
 
   //console.log("interpreting...");
   //console.log(d);
@@ -36,8 +42,19 @@ var interpretate = (d, env = {}) => {
 
 
   //reading the structure of Wolfram ExpressionJSON
-  const name = d[0];
-  const args = d.slice(1, d.length);
+  let name;
+  let args;
+
+  if (stringQ) {
+    //symbol
+    name = d;
+    args = undefined;
+  } else {
+    //subvalue
+    name = d[0];
+    args = d.slice(1, d.length);
+  }
+
   
 
   //checking the context
@@ -91,8 +108,14 @@ var interpretate = (d, env = {}) => {
     }
   };
 
-  console.warning('Symbol '+name+' is undefined in any contextes available. Asking kernel...');
-  console.warning('Heavy usage of Kernel functions might lead to slow-down. Please consider to use native expressions available on the frontend.');
+
+  if (env.unsafe) {
+    console.warn('Symbol '+name+' is undefined in any contextes available. Asking kernel...');
+    console.warn('Heavy usage of Kernel functions might lead to slow-down. Please consider to use native expressions available on the frontend.');  
+  } else {
+    console.error('Symbol '+name+' is undefined in any contextes available. Kernel evaluation is not possible in safe mode.');
+    return undefined;
+  }
 
   return (interpretate.anonymous(d, env));
 };
@@ -106,21 +129,57 @@ interpretate.contextExpand = (context) => {
 }
 
 interpretate.anonymous = (d, org) => {
+
   //TODO Check if it set delayed or set... if set, then one need only to cache it
   if (!server.socket) {
     console.error('Symbol '+name+' is undefined in any contextes available. Communication with Wolfram Kernel is not possible for now.');
   }
 
-  server.askKernel(`ImportString["${JSON.stringify(d)}", "JSONExpression"]`)
+  //limit the reqursion
+  if (org.global.stackKernelCall) {
+    org.global.stackKernelCall++; 
+    if (org.global.stackKernelCall > 64) return '$MaxReqursionExceeded';
+  } else {
+    org.global.stackKernelCall = 0;
+  }
+    
+
+  //server.askKernel(`ImportString["${JSON.stringify(d)}", "JSONExpression"]`)
   //extend core's functions
-  const name = d[0];
+  let name;
+  
+  if (d instanceof Array)
+    name = d[0]; //subvalue
+  else
+    name = d;   //symbol
 
   core[name] = async (args, env) => {
-    const pack = [name, ...args];
+    if (env.global.stackKernelCall) {
+      env.global.stackKernelCall++; 
+      if (env.global.stackKernelCall > 64) return '$MaxReqursionExceeded';
+    } else {
+      env.global.stackKernelCall = 0;
+    }
+
+
+    let pack;
+
+    if (args) { //subvalue
+      const cArgs = [];
+      for (const expr of args) {
+        cArgs.push(interpretate.toJSON(await interpretate(expr, env)));
+      }
+
+      pack = [name, ...cArgs];
+    } else { //just a symbol
+      pack = name
+    }
     //in a case if we want to track this symbol and call .update method on a virtual function
     env.local.trackerId = server.addTracker(name, env.root.instance);
-
-    return server.askKernel(`ImportString["${JSON.stringify(pack)}", "JSONExpression"]`)
+    //this is right. since we need it for each instance.
+    const q = await server.askKernel(`ImportString["${JSON.stringify(pack).replaceAll('\\\"', '\\\\\"').replaceAll('\"', '\\"')}", "ExpressionJSON"]`);
+    return q;
+    //return await interpretate(q, env);
   }
 
   core[name].update = (args, env) => {
@@ -138,7 +197,35 @@ interpretate.anonymous = (d, org) => {
   core[name].virtual = true;
 
   //reevaluate it again
-  return interpretate(d, env);
+  console.warn(JSON.stringify(d));
+  return interpretate(d, org);
+}
+
+//backward transformation
+interpretate.toJSON = (d) => {
+  if (typeof d === 'undefined') {
+    console.log('undefined object');
+    return 'Null';
+  }
+  if (typeof d === 'string') {
+    return "'"+d+"'";
+  }
+  if (typeof d === 'number') {
+    return d; 
+  }
+
+  //if not a JSON array, probably a promise object
+  if (!(d instanceof Array)) {
+    console.error('Unknow object. Replaced with Null');
+    return 'Null';  
+  }
+
+  const sub = [];
+  sub.push('List');
+  sub.push(...d);
+
+  return sub;
+
 }
 
 //Server API
@@ -204,6 +291,7 @@ let server = {
     this.promises[uid] = promise;
     //not implemented
     //console.error('askKernel is not implemented');
+    console.log('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
     this.socket.send('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
     
     return promise.promise    

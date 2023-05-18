@@ -23,7 +23,12 @@ window.EditorAutocomplete.extend([
         "label":"CreateFrontEndObject",
         "type":"keyword",
         "info":"[Both] CreateFrontEndObject[expr, \"uid\"] define a sharable object"
-    },      
+    }, 
+    {
+        "label": "FrontEndVirtual",
+        "type":"keyword",
+        "info":"[Frontend Only] FrontEndVirtual[expr] executes a function in a virtual container"
+    },     
     {
         "label":"MetaMarker",
         "type":"keyword",
@@ -109,7 +114,7 @@ window.EditorAutocomplete.extend([
         "label": "AttachDOM",
         "type": "keyword",
         "info": "[Frontend Only] AttachDOM[DOMid] attach the DOM id to the context"          
-    },    
+    }
 
 ])
 

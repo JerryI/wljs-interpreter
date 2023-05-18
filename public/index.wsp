@@ -24,16 +24,13 @@ ClearDOM["canvas"];
 
 CreateFrontEndObject[{{0,0},{1,1}}, "point"];
 (* to be able to animate we need a container *)
-CreateFrontEndObject[{
+FrontEndVirtual[{
 	(* attach a dom element to draw *)
     AttachDOM["canvas"],
     
     (* our graphics *)
     Graphics[{PointSize[0.1], Point[FrontEndRef["point"]]}, "TransitionDuration"->1000, "ViewBox"->{0,0,700,700}]
-}, "graph"];
-
-(* let's execute! *)
-FrontEndExecutable["graph"];
+}];
 
 Pause[1];
 (* animate the points *)
