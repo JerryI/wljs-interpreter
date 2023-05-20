@@ -13,8 +13,13 @@ class Deferred {
   }
 }  
 
-var interpretate = (d, env = {}) => {
+function isNumeric(value) {
+  return /^-?\d+$/.test(value);
+}
 
+var interpretate = (d, env = {}) => {
+  interpretate.cnt = interpretate.cnt + 1;
+  
   if (typeof d === 'undefined') {
     console.log('undefined object');
     return d;
@@ -25,13 +30,17 @@ var interpretate = (d, env = {}) => {
   //real string
   if (stringQ) {
     if (d.charAt(0) == "'") return d.slice(1, -1);
+    if (isNumeric(d)) return parseInt(d); //for Integers
+
     //in safe mode just convert unknown symbols into a string
-    if (!env.unsafe) return d;
+    //if (!env.unsafe) return d;
     //if not. it means this is a symbol
   }
   if (typeof d === 'number') {
     return d; 
   }
+
+  //console.log('type '+String(typeof d)+' of '+JSON.stringify(d));
 
   //if not a JSON array, probably a promise object or a function
   if (!(d instanceof Array) && !stringQ) return d;
@@ -55,7 +64,12 @@ var interpretate = (d, env = {}) => {
     args = d.slice(1, d.length);
   }
 
-  
+  //checking the scope
+  if ('scope' in env) 
+    if (name in env.scope) 
+      return env.scope[name](args, env);
+     
+
 
   //checking the context
   if ('context' in env) {
@@ -70,7 +84,7 @@ var interpretate = (d, env = {}) => {
       
       //fake frontendexecutable
       //to bring local vars and etc
-      if ('virtual' in env.context[name]) {
+      if ('virtual' in env.context[name] && !(env.novirtual)) {
         const obj = new ExecutableObject('virtual-'+uuidv4(), env, d);
         let virtualenv = obj.assignScope();
         //console.log('virtual env');
@@ -96,7 +110,7 @@ var interpretate = (d, env = {}) => {
 
       //fake frontendexecutable
       //to bring local vars and etc
-      if ('virtual' in c[i][name]) {
+      if ('virtual' in c[i][name] && !(env.novirtual)) {
         const obj = new ExecutableObject('virtual-'+uuidv4(), env, d);
         let virtualenv = obj.assignScope();
         //console.log('virtual env');
@@ -119,6 +133,8 @@ var interpretate = (d, env = {}) => {
 
   return (interpretate.anonymous(d, env));
 };
+
+interpretate.cnt = 0;
 
 //contexes, so symbols names might be duplicated, therefore one can specify the propority context in env variable
 interpretate.contextes = [];
@@ -175,11 +191,16 @@ interpretate.anonymous = (d, org) => {
       pack = name
     }
     //in a case if we want to track this symbol and call .update method on a virtual function
-    env.local.trackerId = server.addTracker(name, env.root.instance);
+    console.log('hu');
+    
+    if (env.root) {
+      env.local.trackerId = server.addTracker(name, env.root.instance);
+    }
     //this is right. since we need it for each instance.
     const q = await server.askKernel(`ImportString["${JSON.stringify(pack).replaceAll('\\\"', '\\\\\"').replaceAll('\"', '\\"')}", "ExpressionJSON"]`);
-    return q;
-    //return await interpretate(q, env);
+    //return q;
+    //console.log('received!: '+JSON.stringify(q));
+    return await interpretate(q, {...env, novirtual: false});
   }
 
   core[name].update = (args, env) => {
@@ -291,7 +312,7 @@ let server = {
     this.promises[uid] = promise;
     //not implemented
     //console.error('askKernel is not implemented');
-    console.log('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
+    //console.log('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
     this.socket.send('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
     
     return promise.promise    
@@ -370,7 +391,7 @@ class ObjectStorage {
   update(newdata) {
     this.cache = newdata;
     Object.keys(this.refs).forEach((ref)=>{
-      console.log('Updating... ' + this.refs[ref].uid);
+      //console.log('Updating... ' + this.refs[ref].uid);
       this.refs[ref].update();
     });
   }
@@ -422,7 +443,7 @@ class ExecutableObject {
 
     //pass local scope
     this.env.local = this.local;
-    console.log('interpreting the content of '+this.uid+'....');
+    //console.log('interpreting the content of '+this.uid+'....');
     //console.log('content');
     //console.log(content);
     return interpretate(content, this.env);
@@ -457,13 +478,13 @@ class ExecutableObject {
   //update the state of it and recompute all objects inside
   //direction: BOTTOM -> TOP
   update() {
-    console.log('updating...'+this.uid);
+    //console.log('updating frontend object...'+this.uid);
     //bubble up (only by 1 level... cuz some BUG, but can still work even with this limitation)
     if (this.parent instanceof ExecutableObject && !(this.child instanceof ExecutableObject)) return this.parent.update(); 
     
     if (this.virtual) {
-      console.log('update virtual type');
-      console.log('here we might have a change to detect, if there is no link to other FE, i.e. our object is dead');
+      //console.log('-> virtual type');
+      //console.log('here we might have a change to detect, if there is no link to other FE, i.e. our object is dead');
       //commit suicide because we alone ;(
       //this.destroy();
     }
@@ -472,7 +493,7 @@ class ExecutableObject {
     this.env.method = 'update';
     //pass local scope
     this.env.local = this.local;
-    console.log('interprete...'+this.uid);
+    //console.log('interprete...'+this.uid);
 
     let content;
     if (!this.virtual) 

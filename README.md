@@ -231,16 +231,20 @@ env = {
 	
 	/* global and local memory of front-end objects*/
 	local: {},
-	global: {},
+	global: {call: uid},
 
 	numerical: false,          /* keep symbolic or not */
 	hold: false                /* keep exps in a List  */
+	unsafe: false			   /* allows to ask Wolfram Kernel for undefined symbols */
 	/* anything you want to share */
 
-	root: /* a reference to the FrontEndObject container */
+	root: ExecutableObject/* a reference to the FrontEndObject container */
 	...
+	//anything else you want
 }
 ```
+
+`local` and `global` cannot be depply-copied, therefore they will be the same for all nested expressions if the expression is not a Frontend Object (or virtual), then `local` will be defferent.
 
 I highlighted only the most usable for now, in principle the most influence to the process of interpreting have
 - `context` - prioritises the context to fetch the symbol to evaluate. See section [Contextes](#Contextes)

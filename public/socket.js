@@ -3,7 +3,7 @@ const wsconnected = new Event("wsconnected");
 
 var socket = new WebSocket("ws://"+window.location.hostname+':'+window.location.port);
 socket.onopen = function(e) {
-  console.log("[open] Соединение установлено");
+  console.log("[open] connecting established");
   server.init(socket);
   window.dispatchEvent(wsconnected);
 
@@ -15,7 +15,7 @@ socket.onmessage = function(event) {
   //callid
   const uid = Date.now() + Math.floor(Math.random() * 100);
   var global = {call: uid};
-  console.log(JSON.parse(event.data));
+
   interpretate(JSON.parse(event.data), {global: global});
 };
 

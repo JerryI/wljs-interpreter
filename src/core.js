@@ -149,9 +149,34 @@ core.FrontEndExecutable = async (args, env) => {
     ObjectHashMap[key2].update(clone);
   }
 
+  core.FlipSymbols = async function (args, env) {
+    const key1 = args[0];
+    const key2 = args[1];
+
+    if (args.length > 2) {
+      console.log('applying function '+args[2]);
+      const temp = await interpretate([args[2], key1], {...env, novirtual: true});
+      core[key1].data = core[key2].data;
+      core[key2].data = temp;
+    } else {
+      const temp = core[key1].data;
+      core[key1].data = core[key2].data;
+      core[key2].data = temp;
+    }
+
+
+
+    core[key1].instances.forEach((inst) => {
+      inst.update();
+    });
+
+    core[key2].instances.forEach((inst) => {
+      inst.update();
+    });    
+  }  
+
   core.Unsafe = async function (args, env) {
-    env.unsafe = true;
-    return await interpretate(args[0], env);
+    return await interpretate(args[0], {...env, unsafe: true});
   }
   
   core.FrontEndExecutableHold = core.FrontEndExecutable;
@@ -247,7 +272,7 @@ core.FrontEndExecutable = async (args, env) => {
     console.error('Event listener for general cases is not supported! Please, use it with Graphics or other packages');
   }
 
-  core.List = function (args, env) {
+  core.List = async function (args, env) {
     let copy, e, i, len, list;
     list = [];
   
@@ -265,7 +290,7 @@ core.FrontEndExecutable = async (args, env) => {
     for (i = 0, len = args.length; i < len; i++) {
       e = args[i];
 
-      list.push(interpretate(e, copy));
+      list.push(await interpretate(e, copy));
     }
 
     return list;
@@ -327,7 +352,7 @@ core.FrontEndExecutable = async (args, env) => {
   core.While = async (args, env) => {
     //sequential execution
     const condition = await interpretate(args[0], env);
-    console.log('condition: ' + condition);
+    //console.log('condition: ' + condition);
     if (condition) {
       await interpretate(args[1], env);
       await interpretate(['While', ...args], env);
@@ -358,4 +383,216 @@ core.FrontEndExecutable = async (args, env) => {
     env.element = document.getElementById(id);
     return id;
   }
+
+  core.WindowScope = async (args, env) => {
+    const key = interpretate(args[0]);
+    return window[key];
+  }
+
+  core.Evaluate = async (args, env) => {
+    const i = await interpretate(args[0], env);
+
+    return await interpretate(i, env);
+  }
+
+  core.RandomSample = async (args, env) => {
+    //TODO: needs perfomance optimization. do not evaluate deeper than
+    let list = await interpretate(args[0], {...env});
+
+    _shuffle(list);
+
+    return list;
+  }
+
+  function _shuffle(array) {
+    let currentIndex = array.length,  randomIndex;
   
+    // While there remain elements to shuffle.
+    while (currentIndex != 0) {
+  
+      // Pick a remaining element.
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+  
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
+  
+    return array;
+  }
+
+  core.Table = async (args, env) => {
+    let copy = Object.assign({}, env);
+    
+    let ranges = await interpretate(args[1], {...env, hold: true});
+    if (!copy.scope) copy.scope = {};
+
+    const it = ranges.shift();
+    console.log('variable: '+it);
+
+    console.log('ranges: '+JSON.stringify(ranges));
+
+    let results = [];
+
+    switch(ranges.length) {
+      case 1:
+        console.log('a list possible');
+        ranges[0] = await interpretate(ranges[0], {...env, hold: true});
+
+        console.log(ranges[0]);
+
+        for(let i=0; i<ranges[0].length; i++) {
+          let deepcopy = {...copy.scope};
+          deepcopy[it] = () => ranges[0][i];
+
+          results.push(await interpretate(args[0], {...copy, scope: deepcopy}));
+        }
+      break;
+
+      case 2:
+        console.log('a numerical range');
+
+        ranges[0] = await interpretate(ranges[0], {...env, numerical:true});
+        ranges[1] = await interpretate(ranges[1], {...env, numerical:true});
+
+        for(let i=ranges[0]; i<=ranges[1]; ++i) {
+          let deepcopy = {...copy.scope};
+          deepcopy[it] = () => i;
+
+          console.error({...copy, scope: deepcopy});
+
+          results.push(await interpretate(args[0], {...copy, scope: deepcopy}));
+        }
+      break;
+
+      case 3:
+        console.log('a numerical range with defined step');
+
+        ranges[0] = await interpretate(ranges[0], {...env, numerical:true});
+        ranges[1] = await interpretate(ranges[1], {...env, numerical:true});
+        ranges[2] = await interpretate(ranges[2], {...env, numerical:true});
+
+        for(let i=ranges[0]; i<=ranges[1]; i = i + ranges[2]) {
+          let deepcopy = {...copy.scope};
+          deepcopy[it] = () => i;
+
+          results.push(await interpretate(args[0], {...copy, scope: deepcopy}));
+        }
+      break;      
+    }
+
+    return results;
+
+  }
+
+  core.JSObject = (args, env) => {
+    return args[0];
+  }
+
+  core.Set = async (args, env) => {
+    const data = await interpretate(args[1], {...env, novirtual: true});
+    const name = args[0];
+
+    console.log(name);
+
+    if (name in core) {
+      console.log("update");
+      //update
+      core[name].data = data;
+
+      core[name].instances.forEach((inst) => {
+        inst.update();
+      });
+
+      
+
+      return;
+    }
+
+    //create
+    console.log("create");
+    core[name] = async (args, env) => {
+      console.log('calling our symbol');
+      if (env.root && !env.novirtual) core[name].instances.push(env.root); //if it was evaluated insdide the container, then, add it to the tracking list
+      if (env.hold) return ['JSObject', core[name].data];
+
+      return core[name].data;
+    }
+
+    core[name].update = async (args, env) => {
+      if (env.hold) return ['JSObject', core[name].data];
+      return core[name].data;
+    }    
+
+    core[name].virtual = true;
+    core[name].instances = [];
+
+    core[name].data = data;
+
+  }
+
+  core.SetDelayed = async (args, env) => {
+    //just copy Set without intepreteate()
+
+  } 
+
+  core.Length = async (args, env) => {
+    const l = (await interpretate(args[0], {...env, novirtual:true})).length;
+
+    console.log('length: '+l);
+    return l;
+  }
+
+  core.Part = async (args, env) => {
+    const p = await interpretate(args[1], env);
+    //console.log('taking part '+p);
+
+    const data = await interpretate(args[0], {...env, hold:true});
+    //console.log('data: '+JSON.stringify(data));
+    if (core._typeof(data, env) == 'JSObject') return data[1][p-1];
+
+    return await interpretate(data[p-1], env);
+  }  
+
+  core.Part.update = core.Part;
+
+  core.JSObject = (args, env) => {
+    return args[0];
+  }
+
+  core.JSObject.update = core.JSObject;
+
+  /*core.RGBColor =  async (args, env) => {
+    const color = [];
+    for (const col of args) {
+      color.push(await interpretate(col, env));
+    }
+    
+    color.unshift('RGBColor');
+    console.log('color:' + JSON.stringify(color));
+    return color;
+
+    return new UnevaluedSymbl() aka JS object
+  }*/
+
+  core.HoldFirstLevel = async (args, env) => {
+    return await interpretate(args[0], {...env, hold:true});
+  } 
+
+  core.CheckLatencyToHost = async (args, env) => {
+    let start = performance.now();
+    let r = await server.askKernel('Table[i, {i, 100000}];');
+    let stop = performance.now();
+
+    const empty = stop - start;
+
+    start = performance.now();
+    r = await server.askKernel('Table[i, {i, 100000}]');
+    stop = performance.now();
+
+    const withData = (stop - start)/100000;
+
+    return `Latency: ${empty} ms, with payload: ${withData} ms / expression`;    
+  }
+

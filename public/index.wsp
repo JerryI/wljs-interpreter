@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html>
+<?wsp
+    example = session["Query", "example"];
+    If[MissingQ[example], example = "simple"];
+    ""
+?>
 <head>
   <title>Sandbox for WLJS</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
@@ -15,48 +20,22 @@
 <body>
   <div class="container mt-5">
     <h1 class="text-center">Sandbox for WLJS</h1>
-
+    <select class="form-select" aria-label="Default select example" onchange="flipPage(this)">
+      <?wsp Table[ ?>
+      <option value="<?wsp i ?>" <?wsp If[example == i, "selected", " "] ?>><?wsp i ?></option>
+      <?wsp , {i, FileBaseName/@FileNames["*", "examples", 1]}] ?>
+    </select> 
     <div class="row mt-5">
+     
       <div class="col-md-6">
         <h2>Input Form WL</h2>
         <textarea id="code-input" class="form-control code-input" placeholder="Enter your Mathematica code here">
-ClearDOM["canvas"];
-
-CreateFrontEndObject[{{0,0},{1,1}}, "point"];
-(* to be able to animate we need a container *)
-FrontEndVirtual[{
-	(* attach a dom element to draw *)
-    AttachDOM["canvas"],
-    
-    (* our graphics *)
-    Graphics[{PointSize[0.1], Point[FrontEndRef["point"]]}, "TransitionDuration"->1000, "ViewBox"->{0,0,700,700}]
-}];
-
-Pause[1];
-(* animate the points *)
-SetFrontEndObject["point", {{-1,0},{1,0}}];
+<?wsp If[FileExistsQ[#], Import[#, "String"], ""] &@ FileNameJoin[{"examples", example, "script.wls"}] ?>
         </textarea>
         <h2>Input Form JS</h2>
         <textarea id="code-input-js" class="form-control code-input" placeholder="Enter your JS code here">
-const main = document.getElementById('dom-canvas');
-
-core.ClearDOM = async (args, env) => {
-	const key = interpretate(args[0], env);
-  	const old = document.getElementById(key);
-  	if (old) old.remove();
-  
-    let el = document.createElement('div');
-  	el.id = key;
-	
-  	main.appendChild(el);
-  	return null;
-}
-
-return '';
-        
-        
-        
-        </textarea>        
+<?wsp If[FileExistsQ[#], Import[#, "String"], ""] &@ FileNameJoin[{"examples", example, "script.js"}] ?>
+    </textarea>        
       </div>
 
       <div class="col-md-6">
@@ -80,7 +59,7 @@ return '';
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/mathematica/mathematica.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/javascript/javascript.min.js"></script>
 
-  <script type="module" src="https://cdn.jsdelivr.net/gh/JerryI/wljs-graphics-d3@main/dist/kernel.js"></script>
+  <?wsp If[FileExistsQ[#], LoadString[Import[#, "String"]], ""] &@ FileNameJoin[{"examples", example, "foot.wsp"}] ?>
 
   <script src="socket.js"></script>
   <script>
@@ -152,8 +131,12 @@ return '';
     // Call the updateOutputForm and captureConsoleOutput functions when the page is loaded
     window.onload = function() {
 
-      captureConsoleOutput();
+      //captureConsoleOutput();
     };
+
+    function flipPage(e) {
+      openawindow(`/?example=${e.value}`);
+    }
 
   </script>
 </body>
