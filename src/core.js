@@ -460,7 +460,7 @@ core.FrontEndExecutable = async (args, env) => {
           let deepcopy = {...copy.scope};
           deepcopy[it] = () => i;
 
-          console.error({...copy, scope: deepcopy});
+          //console.error({...copy, scope: deepcopy});
 
           results.push(await interpretate(args[0], {...copy, scope: deepcopy}));
         }
