@@ -64,6 +64,8 @@ var interpretate = (d, env = {}) => {
     args = d.slice(1, d.length);
   }
 
+  //console.log(name);
+
   //checking the scope
   if ('scope' in env) 
     if (name in env.scope) 
@@ -87,7 +89,8 @@ var interpretate = (d, env = {}) => {
       if ('virtual' in env.context[name] && !(env.novirtual)) {
         const obj = new ExecutableObject('virtual-'+uuidv4(), env, d);
         let virtualenv = obj.assignScope();
-        //console.log('virtual env');
+        console.log('virtual env');
+        obj.firstName = name;
         //console.log(virtualenv);
         return env.context[name](args, virtualenv);    
       }
@@ -113,7 +116,9 @@ var interpretate = (d, env = {}) => {
       if ('virtual' in c[i][name] && !(env.novirtual)) {
         const obj = new ExecutableObject('virtual-'+uuidv4(), env, d);
         let virtualenv = obj.assignScope();
-        //console.log('virtual env');
+        console.log('virtual env');
+
+        obj.firstName = name;
         //console.log(virtualenv);        
         return c[i][name](args, virtualenv);    
       }     
@@ -127,7 +132,7 @@ var interpretate = (d, env = {}) => {
     console.warn('Symbol '+name+' is undefined in any contextes available. Asking kernel...');
     console.warn('Heavy usage of Kernel functions might lead to slow-down. Please consider to use native expressions available on the frontend.');  
   } else {
-    console.error('Symbol '+name+' is undefined in any contextes available. Kernel evaluation is not possible in safe mode.');
+    throw('Symbol '+name+' is undefined in any contextes available. Kernel evaluation is not possible in safe mode.');
     return undefined;
   }
 

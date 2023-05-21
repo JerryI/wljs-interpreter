@@ -1,0 +1,2 @@
+<!--<script type="module" src="wljs-graphics3d-threejs/dist/kernel.js"></script>-->
+<script type="module" src="https://cdn.statically.io/gh/JerryI/Mathematica-ThreeJS-graphics-engine/master/dist/kernel.js"></script>

@@ -201,18 +201,35 @@ core.FrontEndExecutable = async (args, env) => {
   //AHHAHAHAH
   core.Hold = core.FrontEndOnly;
   
-  core.Power = (args, env) => {
-    if (!env.numerical) return ["Power", ...args];
+  core.Power = async (args, env) => {
+    //if (!env.numerical) return ["Power", ...args];
     
-    const val = interpretate(args[0], env);
-    const p   = interpretate(args[1], env);
+    const val = await interpretate(args[0], env);
+    const p   = await interpretate(args[1], env);
   
     return Math.pow(val,p);
   }
 
-  core.Plus = (args, env) => {
-    if (!env.numerical) return ["Plus", ...args];
-    return interpretate(args[0], env) + interpretate(args[1], env);
+  core.Plus = async (args, env) => {
+    let x = await interpretate(args[0], env);
+    let y = await interpretate(args[1], env);
+
+    const typeX = typeof x;
+    const typeY = typeof y;
+
+    if (typeX === 'number' && typeof typeY !== 'number') {
+      return sumNestedArrayByScalar(y, x)
+    }
+
+    if (typeY === 'number' && typeof typeX !== 'number') {
+      return sumNestedArrayByScalar(x, y)
+    }    
+
+    if (typeY !== 'number' && typeof typeX !== 'number') {
+      return calculateNestedArraySum(x,y)
+    }
+    //TODO: evaluate it before sending its original symbolic form
+    return x + y;
   }  
   
   core.Rational = function (args, env) {
@@ -221,27 +238,72 @@ core.FrontEndExecutable = async (args, env) => {
     //return the original form igoring other arguments
     return ["Rational", args[0], args[1]];
   }
+
+  function multiplyNestedArrayByScalar(arr, scalar) {
+    if (Array.isArray(arr)) {
+      return arr.map((item) => multiplyNestedArrayByScalar(item, scalar));
+    } else {
+      return arr * scalar;
+    }
+  }
+
+  function calculateNestedArraySum(arr1, arr2) {  
+    // Base case: if both inputs are numbers, return their sum
+
   
-  core.Times = function (args, env) {
-    if (env.numerical === true) return interpretate(args[0], env)*interpretate(args[1], env);
-    
-    //TODO: evaluate it before sending its original symbolic form
-    return ["Times", ...args];
+  const result = [];
+
+  for (let i = 0; i < arr1.length; i++) {
+    if (Array.isArray(arr1[i]) && Array.isArray(arr2[i])) {
+      // If both elements are arrays, recursively calculate nested sum
+      result.push(calculateNestedArraySum(arr1[i], arr2[i]));
+    } else if (!Array.isArray(arr1[i]) && !Array.isArray(arr2[i])) {
+      // If both elements are numbers, add them
+      result.push(arr1[i] + arr2[i]);
+    } else {
+      // Mismatched types, throw an error
+      throw new Error('Mismatched element types in nested arrays.');
+    }
   }
 
-  core.Sin = function (args, env) {
-    if (env.numerical === true) return Math.sin(interpretate(args[0], env));
-    
-    //TODO: evaluate it before sending its original symbolic form
-    return ["Sin", ...args];    
-  }
-
-  core.Cos = function (args, env) {
-    if (env.numerical === true) return Math.cos(interpretate(args[0], env));
-    
-    //TODO: evaluate it before sending its original symbolic form
-    return ["Cos", ...args];    
+  return result;
   }  
+
+  function sumNestedArrayByScalar(arr, scalar) {
+    if (Array.isArray(arr)) {
+      return arr.map((item) => sumNestedArrayByScalar(item, scalar));
+    } else {
+      return arr + scalar;
+    }
+  }  
+  
+  core.Times = async function (args, env) {
+    //if (env.numerical === true) return (await interpretate(args[0], env)) * (await interpretate(args[1], env));
+    let x = await interpretate(args[0], env);
+    let y = await interpretate(args[1], env);
+
+    const typeX = typeof x;
+    const typeY = typeof y;
+
+    if (typeX === 'number' && typeof typeY !== 'number') {
+      return multiplyNestedArrayByScalar(y, x)
+    }
+
+    if (typeY === 'number' && typeof typeX !== 'number') {
+      return multiplyNestedArrayByScalar(x, y)
+    }    
+
+    //TODO: evaluate it before sending its original symbolic form
+    return x * y;
+  }
+
+  core.Sin = async function (args, env) {
+    return Math.sin(await interpretate(args[0], env));    
+  }
+
+  core.Cos = async function (args, env) {
+    return Math.cos(await interpretate(args[0], env));    
+  }
 
   core.Tuples = async (args, env) => {
     const array = await interpretate(args[0], env);
@@ -277,7 +339,7 @@ core.FrontEndExecutable = async (args, env) => {
     list = [];
   
     if (env.hold === true) {
-      console.log('holding...');
+      //console.log('holding...');
       for (i = 0, len = args.length; i < len; i++) {
         e = args[i];
 
@@ -336,6 +398,26 @@ core.FrontEndExecutable = async (args, env) => {
         resolve('resolved');
       }, time);
     })  
+  }
+
+  core.Normalize = async (args, env) => {
+    const data = await interpretate(args[0], env);
+    console.log(data);
+
+    let length = 0.0;
+    for (let i=0; i<data.length; ++i) {
+      length += data[i]*data[i];
+    }
+
+
+    return (data.map((e)=>e/length));
+  }
+
+  core.Cross = async (args, env) => {
+    const x = await interpretate(args[0], env);
+    const y = await interpretate(args[1], env);
+
+    return [y[2]*x[1] - y[1]*x[2], -y[2]*x[0]+y[0]*x[2], y[1]*x[0] - y[0]*x[1]];
   }
 
   core.CompoundExpression = async (args, env) => {
@@ -424,65 +506,90 @@ core.FrontEndExecutable = async (args, env) => {
 
   core.Table = async (args, env) => {
     let copy = Object.assign({}, env);
+    copy.hold = false;
     
-    let ranges = await interpretate(args[1], {...env, hold: true});
+    let listOfRanges = [];
+
+    for (let ranges of args.slice(1)) {
+      listOfRanges.push({ranges: await interpretate(ranges, {...env, hold: true})});
+      //just to get a JS array of WL objects //hah kinda strange combination
+    }
+
     if (!copy.scope) copy.scope = {};
+    let deepcopy = {...copy.scope};
 
-    const it = ranges.shift();
-    console.log('variable: '+it);
+    //first stage - assign the first values
+    for (let i=0; i<listOfRanges.length; ++i) {
+      //console.log();
+      listOfRanges[i].id =  listOfRanges[i].ranges.shift();
+      //console.log('variable: '+listOfRanges[i].id);
 
-    console.log('ranges: '+JSON.stringify(ranges));
+      switch(listOfRanges[i].ranges.length) {
+        case 1:
+          console.error('not supported by now');
+          return null;
 
-    let results = [];
+        case 2:
+          //console.log('a numerical range');
+  
+          listOfRanges[i].ranges[0] = await interpretate(listOfRanges[i].ranges[0], {...env, numerical:true, hold:false});
+          listOfRanges[i].ranges[1] = await interpretate(listOfRanges[i].ranges[1], {...env, numerical:true, hold:false});
+        break;
+  
+        case 3:
+          //console.log('a numerical range with defined step');
+  
+          listOfRanges[i].ranges[0] = await interpretate(listOfRanges[i].ranges[0], {...env, numerical:true, hold:false});
+          listOfRanges[i].ranges[1] = await interpretate(listOfRanges[i].ranges[1], {...env, numerical:true, hold:false});
+          listOfRanges[i].ranges[2] = await interpretate(listOfRanges[i].ranges[2], {...env, numerical:true, hold:false});
+        break;      
+      }      
+    }
 
-    switch(ranges.length) {
-      case 1:
-        console.log('a list possible');
-        ranges[0] = await interpretate(ranges[0], {...env, hold: true});
+    //console.log(JSON.stringify(listOfRanges));
 
-        console.log(ranges[0]);
 
-        for(let i=0; i<ranges[0].length; i++) {
-          let deepcopy = {...copy.scope};
-          deepcopy[it] = () => ranges[0][i];
+    const iterate = async (r0, f, level) => { 
+      const result = [];
+      const r = {...r0};
 
-          results.push(await interpretate(args[0], {...copy, scope: deepcopy}));
-        }
-      break;
+      //console.log('range: '+JSON.stringify(r));
 
+      switch(r.ranges.length) {
       case 2:
-        console.log('a numerical range');
-
-        ranges[0] = await interpretate(ranges[0], {...env, numerical:true});
-        ranges[1] = await interpretate(ranges[1], {...env, numerical:true});
-
-        for(let i=ranges[0]; i<=ranges[1]; ++i) {
-          let deepcopy = {...copy.scope};
-          deepcopy[it] = () => i;
-
-          //console.error({...copy, scope: deepcopy});
-
-          results.push(await interpretate(args[0], {...copy, scope: deepcopy}));
+        for(let i=r.ranges[0]; i<=r.ranges[1]; i++) {
+          //console.log('iterator '+r.id+' = '+i);
+          deepcopy[r.id] = () => i;
+          result.push(await f(level+1));
         }
       break;
 
       case 3:
-        console.log('a numerical range with defined step');
-
-        ranges[0] = await interpretate(ranges[0], {...env, numerical:true});
-        ranges[1] = await interpretate(ranges[1], {...env, numerical:true});
-        ranges[2] = await interpretate(ranges[2], {...env, numerical:true});
-
-        for(let i=ranges[0]; i<=ranges[1]; i = i + ranges[2]) {
-          let deepcopy = {...copy.scope};
-          deepcopy[it] = () => i;
-
-          results.push(await interpretate(args[0], {...copy, scope: deepcopy}));
+        for(let i=r.ranges[0]; i<=r.ranges[1]; i=i+r.ranges[2]) {
+          //console.log('iterator '+r.id+' = '+i);
+          deepcopy[r.id] = () => i;
+          result.push(await f(level+1));
         }
-      break;      
+      break;
+      }
+      return result;
+    };  
+
+    let m;
+    m = (level) => {
+      //console.log('go deeper');
+      if (level === listOfRanges.length) return interpretate(args[0], {...copy, scope: {...deepcopy}}); 
+      //console.log('next nested');
+      return iterate(listOfRanges[level], m, level);
     }
 
-    return results;
+    const table = await iterate(listOfRanges[0], m, 0);
+
+    if (env.hold) {
+      //env.hold = false;
+      return ["JSObject", table]; 
+    }
+    return table;
 
   }
 
@@ -513,7 +620,7 @@ core.FrontEndExecutable = async (args, env) => {
     //create
     console.log("create");
     core[name] = async (args, env) => {
-      console.log('calling our symbol');
+      console.log('calling our symbol...');
       if (env.root && !env.novirtual) core[name].instances.push(env.root); //if it was evaluated insdide the container, then, add it to the tracking list
       if (env.hold) return ['JSObject', core[name].data];
 
@@ -547,12 +654,21 @@ core.FrontEndExecutable = async (args, env) => {
   core.Part = async (args, env) => {
     const p = await interpretate(args[1], env);
     //console.log('taking part '+p);
-
     const data = await interpretate(args[0], {...env, hold:true});
-    //console.log('data: '+JSON.stringify(data));
-    if (core._typeof(data, env) == 'JSObject') return data[1][p-1];
 
-    return await interpretate(data[p-1], env);
+    //console.log(JSON.stringify(data));
+
+    if (p instanceof Array) {
+      
+      if (core._typeof(data, env) == 'JSObject') return p.map(i => data[1][i-1]);
+      return await interpretate(p.map(i => data[1][i-1]), env);
+    } else {
+
+      
+      //console.log('data: '+JSON.stringify(data));
+      if (core._typeof(data, env) == 'JSObject') return data[1][p-1];
+      return await interpretate(data[p-1], env);
+    }
   }  
 
   core.Part.update = core.Part;
@@ -576,6 +692,34 @@ core.FrontEndExecutable = async (args, env) => {
     return new UnevaluedSymbl() aka JS object
   }*/
 
+  core.Flatten = async (args, env) => {
+    //always reset hold if it is there, that it wont propagate
+    const result = (await interpretate(args[0], {...env, hold:false})).flat(Infinity);
+    if (env.hold) return ['JSObject', result];
+    return result;
+  }
+
+  core.Partition = async (args, env) => {
+    const perChunk = await interpretate(args[1], {...env, hold:false});
+    const inputArray = await interpretate(args[0], {...env, hold:false});
+
+    const result = inputArray.reduce((resultArray, item, index) => { 
+      const chunkIndex = Math.floor(index/perChunk)
+    
+      if(!resultArray[chunkIndex]) {
+        resultArray[chunkIndex] = [] // start a new chunk
+      }
+    
+      resultArray[chunkIndex].push(item)
+    
+      return resultArray
+    }, []);
+
+
+    if (env.hold) return ['JSObject', result];
+    return result;
+  }  
+
   core.HoldFirstLevel = async (args, env) => {
     return await interpretate(args[0], {...env, hold:true});
   } 
@@ -591,8 +735,76 @@ core.FrontEndExecutable = async (args, env) => {
     r = await server.askKernel('Table[i, {i, 100000}]');
     stop = performance.now();
 
-    const withData = (stop - start)/100000;
+    const withData = 800200/(stop - start);
 
-    return `Latency: ${empty} ms, with payload: ${withData} ms / expression`;    
+    return `Latency: ${empty} ms, with payload: ${withData} bytes / ms`;    
   }
+
+  core.Benchmark = async (args, env) => {
+    let host = await server.askKernel('Table[Sqrt[Sin[i]], {i, 0.0, 100000.0}] // RepeatedTiming // First');
+   
+    let start, stop;
+    let front = [];
+
+    for (let i=0; i<10; ++i) {
+      start = performance.now();
+      await interpretate(['Table', ['Sqrt', ['Sin', 'i']], ['List', 'i', 0.0, 100000.0]], env);
+      stop = performance.now();
+
+      front.push((stop - start)/1000);
+    }
+
+    const average = host/(front.reduce((a, b) => a + b, 0) / front.length);
+    const max = host/Math.max(...front);
+
+    return `Average frontend speed ${average} with the slowest ${max}`;    
+  }  
+
+core.With = async (args, env) => {
+  const params = await interpretate(args[0], {...env, hold:true});
+
+  console.log(JSON.stringify(params));
+  
+  let scope;
+  if (env.scope) scope = {...env.scope}; else scope = {};
+
+  const copy = {...env, scope: scope};
+  for (const p of params) {
+    const r = await interpretate(p[2], env);
+    copy.scope[p[1]] = () => r;
+  }
+
+  return await interpretate(args[1], copy);
+}
+
+core.Map = async (args, env) => {
+  const func = args[0];
+  const array = await interpretate(args[1], {...env, hold:false}); 
+  console.log(array);
+
+  const result = [];
+
+  for (const el of array) {
+    result.push(await interpretate([func, ['JSObject', el]], {...env, hold:false}));
+  }
+
+  if (env.hold) return ["JSObject", result];
+  return result;
+}
+
+core.White = (args, env) => {
+  return interpretate(['RGBColor', 1, 1, 1], env);
+}
+
+core.LightBlue = (args, env) => {
+  return interpretate(['RGBColor', 0.87, 0.94, 1], env);
+}
+
+core.Brown = (args, env) => {
+  return interpretate(['RGBColor', 0.6, 0.4, 0.2], env);
+}
+
+core.Sqrt = async (args, env) => {
+  return Math.sqrt(await interpretate(args[0], env));
+}
 

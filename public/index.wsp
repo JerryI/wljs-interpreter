@@ -3,6 +3,7 @@
 <?wsp
     example = session["Query", "example"];
     If[MissingQ[example], example = "simple"];
+    nohup = False;
     ""
 ?>
 <head>
@@ -16,6 +17,7 @@
       font-family: monospace;
     }
   </style>
+  <?wsp If[FileExistsQ[#], LoadString[Import[#, "String"]], ""] &@ FileNameJoin[{"examples", example, "pre.wsp"}] ?>
 </head>
 <body>
   <div class="container mt-5">
@@ -39,8 +41,10 @@
       </div>
 
       <div class="col-md-6">
-        <h2>Console</h2>
+      <?wsp If[nohup//TrueQ, "", ?>
+      <h2>Console</h2>
         <textarea id="code-output" class="form-control code-output" cols="50" rows="15" readonly></textarea>
+        <?wsp ] ?>
         <h2>JS Output</h2>
         <div id="dom-canvas" class="form-control code-output"><span></span></div>
       </div>
@@ -64,14 +68,16 @@
   <script src="socket.js"></script>
   <script>
     var test;
+
+    window.saved = () => {};
     // Initialize CodeMirror on the input textarea
-    const codeInput = CodeMirror.fromTextArea(document.getElementById('code-input'), {
+    var codeInput = CodeMirror.fromTextArea(document.getElementById('code-input'), {
       mode: 'mathematica',
       lineNumbers: true,
       theme: 'default',
       extraKeys: {
         "Shift-Enter": function(instance) { 
-      
+            window.saved(instance.getValue());
             server.socket.send(`runCode["${instance.getValue().replace(/(\r\n|\n|\r)/gm, "").replaceAll('\\\"', '\\\\\"').replaceAll('\"', '\\"')}"]`);
         },
       } 
@@ -130,8 +136,9 @@
 
     // Call the updateOutputForm and captureConsoleOutput functions when the page is loaded
     window.onload = function() {
-
-      //captureConsoleOutput();
+      <?wsp If[nohup//TrueQ, "", ?>
+      captureConsoleOutput();
+      <?wsp ] ?>
     };
 
     function flipPage(e) {
