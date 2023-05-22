@@ -17,6 +17,11 @@ function isNumeric(value) {
   return /^-?\d+$/.test(value);
 }
 
+window.Deferred = Deferred;
+window.aflatten = aflatten;
+
+window.isNumeric = isNumeric;
+
 var interpretate = (d, env = {}) => {
   interpretate.cnt = interpretate.cnt + 1;
   
@@ -102,7 +107,7 @@ var interpretate = (d, env = {}) => {
   //just go over all contextes defined to find the symbol
   const c = interpretate.contextes;
 
-  for (i = 0; i < c.length; ++i) {
+  for (let i = 0; i < c.length; ++i) {
     if (name in c[i]) {
       //console.log('symbol '+name+' was found in '+c[i].name);
 
@@ -343,6 +348,9 @@ let server = {
 var ObjectHashMap = {}
 var InstancesHashMap = {}
 
+window.ObjectHashMap = ObjectHashMap
+window.InstancesHashMap = InstancesHashMap
+
 let garbageTimeout = false;
 
 const renewGarbageTimer = () => {
@@ -416,6 +424,8 @@ class ObjectStorage {
     return promise.promise;  
   }
 }
+
+window.ObjectStorage = ObjectStorage
 
 //instance of FrontEndExecutable object
 class ExecutableObject {
@@ -548,6 +558,8 @@ class ExecutableObject {
   }  
 };
 
+window.ExecutableObject = ExecutableObject
+
 
 class jsRule {
   // Constructor
@@ -557,12 +569,16 @@ class jsRule {
   }
 }
 
+
+
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
 }
+
+window.uuidv4 = uuidv4
 
 function downloadByURL(url, name) {
   var link = document.createElement('a');
@@ -571,6 +587,8 @@ function downloadByURL(url, name) {
   link.click();
   link.remove();
 }
+
+window.downloadByURL = downloadByURL
 
 var setInnerHTML = function(elm, html) {
   elm.innerHTML = html;
@@ -583,12 +601,16 @@ var setInnerHTML = function(elm, html) {
   });
 };
 
+window.setInnerHTML = setInnerHTML
+
 function openawindow(url, target='_self') {
   const fake = document.createElement('a');
   fake.target = target;
   fake.href = url;
   fake.click();
 }
+
+window.openawindow = openawindow
 
 // Throttle function: Input as function which needs to be throttled and delay is the time interval in milliseconds
 function throttle(cb, delay = 300) {
@@ -615,3 +637,9 @@ function throttle(cb, delay = 300) {
       setTimeout(timeoutFunc, delay)
     }
 }
+
+window.throttle = throttle;
+
+window.server = server;
+
+window.interpretate = interpretate;

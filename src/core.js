@@ -823,3 +823,5 @@ core.Sqrt = async (args, env) => {
   return Math.sqrt(await interpretate(args[0], env));
 }
 
+window.core = core;
+

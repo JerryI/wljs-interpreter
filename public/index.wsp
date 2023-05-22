@@ -56,8 +56,11 @@
       </div>
     </div>
   </div>
-  <script><?wsp Import[FileNameJoin[{"src", "interpreter.js"}], "String"] ?></script>
-  <script><?wsp Import[FileNameJoin[{"src", "core.js"}], "String"] ?></script>
+  <!--<script><?wsp Import[FileNameJoin[{"src", "interpreter.js"}], "String"] ?></script>
+  <script><?wsp Import[FileNameJoin[{"src", "core.js"}], "String"] ?></script>-->
+
+  <script type="module" src="interpreter.js"></script>
+  <script type="module" src="core.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/mathematica/mathematica.min.js"></script>
