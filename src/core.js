@@ -297,6 +297,21 @@ core.FrontEndExecutable = async (args, env) => {
     return x * y;
   }
 
+  function getRandomArbitrary(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  core.RandomReal = async (args, env) => {
+    const range = await interpretate(args[0], env);
+    const size = await interpretate(args[1], env);
+    let arr = [];
+    for (let i=0; i<size; ++i) {
+      arr.push(getRandomArbitrary(...range));
+    }
+
+    return arr;
+  }
+
   core.Sin = async function (args, env) {
     return Math.sin(await interpretate(args[0], env));    
   }

@@ -1,0 +1,1 @@
+If this is not a loop `While`, `For`, `Table`, the assigment threats as dynamic. Each set cause creating of virtual-virtual functions

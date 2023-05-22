@@ -16,10 +16,7 @@ vertices = {{0, -1/2, 1/Sqrt[2]}, {1/2, 0, 0}, {5/6,
 faces = {{1, 2, 3}, {3, 2, 4}, {1, 3, 4}, {4, 5, 1}, {1, 5, 6}, {1, 6,
      2}, {4, 2, 6}, {4, 6, 5}};
 
-mat = With[{s = 3.14/2},
-  {{Cos[s], -Sin[s], 0}, {Sin[s], Cos[s], 
-  0}, {0, 0, 1}}
-];
+matrix = With[{s = 0}, {{Cos[s], -Sin[s], 0}, {Sin[s], Cos[s], 0}, {0, 0, 1}}];
 
 pos = {-1,0,-0.2};
 vel = {-1,0,0};
@@ -27,13 +24,13 @@ vel = {-1,0,0};
 FrontEndVirtual[{
   AttachDOM["dom-canvas"],
   Graphics3D[
-    {SkyAndWater[], Translate[
-    GeometricTransformation[{White, Translate[Polygon /@ sail, {-0.15, 0, 1.5}], 
+    {SkyAndWater[], Roughness[0], Reflectivity[1], IOR[2], Clearcoat[0.5], Table[{RGBColor[RandomReal[{0,1}, 3]], Sphere[{0,0,10} + RandomReal[{-22,22}, 3]]}, {j,1,80}], Translate[
+    GeometricTransformation[{White, Camera[], Translate[Polygon /@ sail, {-0.15, 0, 1.5}], 
       LightBlue,  GraphicsComplex[vertices, Polygon[faces]],
       Brown, Cylinder[{{0, 0, 1/Sqrt[2]}, {0, 0, 3/Sqrt[2]}}, 0.03]
-    }, mat]
+    }, matrix]
     , pos]}
-  , "Lerp"->True, "Lighting"->"None", "Background"->"None"];
+  , "Lerp"->True, "Lighting"->"None", "Background"->"None", "ImageSize"->800];
 }];
 
 
@@ -43,6 +40,9 @@ While[True,
   pos = pos + vel;
 
   vel = Normalize[vel + 0.1 Cross[vel, {0,0,1}]];
+  matrix = With[{x = vel[[1]], y = vel[[2]]}, {{-x, y, 0}, {-y, -x, 0}, {0, 0, 1}}];
+
+  
 ]
 
 
