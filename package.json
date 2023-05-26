@@ -22,7 +22,7 @@
   "homepage": "https://github.com/JerryI/wljs-interpreter#readme",
   "scripts": {
     "start": "parcel index.html --open",
-    "build": "parcel build index.html"
+    "build": "parcel build index.html --public-url ./"
   },
   "devDependencies": {
     "@types/node": "^16.7.10",
