@@ -144,7 +144,7 @@ function updateIframe(code: Object, codejs: string): void {
       <html>
       <head>
         <base href="${window.location.origin}" />
-        <link rel="stylesheet" href="/iframe.css">
+        <link rel="stylesheet" href="iframe.css">
         <script>             
         window.console = {
           log: function(str){
@@ -180,8 +180,8 @@ function updateIframe(code: Object, codejs: string): void {
         <div id="canvas"></div>
 
         
-        <script type="module" src="/interpreter.js"></script>
-        <script type="module" src="/core.js"></script>
+        <script type="module" src="interpreter.js"></script>
+        <script type="module" src="core.js"></script>
 
         ${inc}
         
