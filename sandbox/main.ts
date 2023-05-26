@@ -143,7 +143,7 @@ function updateIframe(code: Object, codejs: string): void {
   const source = /* html */ `
       <html>
       <head>
-        <base href="${window.location.origin}" />
+     
         <link rel="stylesheet" href="iframe.css">
         <script>             
         window.console = {
