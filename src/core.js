@@ -303,13 +303,31 @@ core.FrontEndExecutable = async (args, env) => {
 
   core.RandomReal = async (args, env) => {
     const range = await interpretate(args[0], env);
-    const size = await interpretate(args[1], env);
-    let arr = [];
-    for (let i=0; i<size; ++i) {
-      arr.push(getRandomArbitrary(...range));
-    }
+    
+    if (args.length > 1) {
+      let size = await interpretate(args[1], env);
+      let arr = [];
 
-    return arr;
+    if (size[0]) {
+      for (let j=0; j<size[0]; ++j) {
+        const sub = [];
+        for (let i=0; i<size[1]; ++i) {
+          sub.push(getRandomArbitrary(...range));
+        }
+        arr.push(sub);
+      }
+      
+      return arr;
+    } else {
+      for (let i=0; i<size; ++i) {
+        arr.push(getRandomArbitrary(...range));
+      }
+      return arr;
+    }
+  } 
+    return getRandomArbitrary(...range);
+  
+
   }
 
   core.Sin = async function (args, env) {
@@ -405,7 +423,7 @@ core.FrontEndExecutable = async (args, env) => {
   }
 
   core.Pause = async (args, env) => {
-    const time = 1000*interpretate(args[0], env);
+    const time = 1000*(await interpretate(args[0], env));
 
     return new Promise(resolve => {
       setTimeout(() => {

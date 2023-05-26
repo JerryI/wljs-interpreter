@@ -1,17 +1,13 @@
 {
   "name": "wljs-interpreter",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A core library and WL interpreter written in pure JS",
-  "scripts": {
-
-  },
   "wljs-meta": {
     "js": [
       "src/interpreter.js",
       "src/core.js",
       "src/metamarkers.js"
     ],
-
     "autocomplete": "src/autocomplete.js"
   },
   "repository": {
@@ -24,10 +20,36 @@
     "url": "https://github.com/JerryI/wljs-interpreter/issues"
   },
   "homepage": "https://github.com/JerryI/wljs-interpreter#readme",
+  "scripts": {
+    "start": "parcel index.html --open",
+    "build": "parcel build index.html"
+  },
   "devDependencies": {
-
+    "@types/node": "^16.7.10",
+    "buffer": "^5.7.1",
+    "parcel": "^2.8.3",
+    "parcel-bundler": "^1.12.5",
+    "parcel-reporter-static-files-copy": "^1.5.0",
+    "typescript": "^4.3.2"
   },
   "dependencies": {
-
-  }
+    "@codemirror/lang-javascript": "^6.1.8",
+    "@codemirror/legacy-modes": "6.3.2",
+    "@codemirror/state": "6.2.0",
+    "@codemirror/stream-parser": "0.19.9",
+    "@codemirror/view": "6.9.6",
+    "cm6-theme-nord": "^0.2.0",
+    "json-compress": "github:Alamantus/JSON-Compress",
+    "jsoncrush": "^1.1.8",
+    "priceless-mathematica": "^1.1.8",
+    "rainbowbrackets": "^2.0.2"
+  },
+  "staticFiles": [
+    {
+      "staticPath": "static"
+    },
+    {
+      "staticPath": "src"
+    }
+  ]
 }

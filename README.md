@@ -1,27 +1,35 @@
 # Minimal Wolfram Language Interpreter (WLJS) 
 *written with love in Javascript*
 
+![image](static/demo.gif)
+
 ***Early Development Stage!***
+
+## Live Demo [GithubPages]()
+There are a couple of examples available. To edit WL code, one need to have Wolfram Engine or Mathematica installed, since there is no WL syntax to JSON parser written on the internet so far. Please run
+```mathematica
+Import["https://raw.githubusercontent.com/JerryI/tinyweb-mathematica/master/Tinyweb/Tinyweb.wl"];
+server = WEBServer["addr" -> "127.0.0.1:8099", "path" -> "/", "socket-close" -> True];
+server // WEBServerStart;
+transpile[c_] := WebSocketSend[Global`client, ToExpression[c, InputForm, Hold]];
+```
+or if you wolframscript
+```bash
+git clone https://github.com/JerryI/wljs-interpreter
+cd wljs-interpreter
+wolframscript -f transpile.wls
+```
+and reload Github page.
 
 __This is a core component of [Wolfram JS Frontend](https://github.com/JerryI/wolfram-js-frontend) project__
 but one can use it independently as well
+__Please, see [Docs](i still did not write them, sorry)__
 
-
-
-## Please, see [Docs](docs/Introduction.md)
 ---
 
 It includes two parts
 - `interpeter.js` - a set of functions, that executes the commands and maintain binding between variables
 - `core.js` - core library (support for `List`, `Rule` and etc...)
-
-## Examples
-You need to have only `wolframscript` and any modern browser installed 
-> Wolfram Kernel only runs HTTP server and provides the convertation from WL language syntax to JSON representation, since there is no freeware WL parser on the internet so far. All computations happends inside your browser
-```bash
-cd wljs-interpreter
-wolframscript -f serve.wls
-```
 
 *This is not meant for heavy computations, but rather for interpreting the results produced by Wolfram Engine / Mathematica in your browser or making standalone notebooks*
 
@@ -39,33 +47,18 @@ Just simply include `dist/kernel.js` file into the web-page as a module using CD
 ## Partially supported native WL expressions
 There is no aim to recreate all Wolfram Language functions, you can think about this interpreter more like as a bridge between `Javascript` ecosystem and `Wolfram Language`. The interpreter can easily be expanded via packages or explicitly defined functions inside the HTML page. One can write your own symbols based on the application you have.
 
-- `Association`
-- `CompoundExpression`
-- `Cos`
-- `Evaluate`
-- `Length`
-- `List`
-- `N`
-- `Part`
-- `Pause`
-- `Plus`
-- `Power`
-- `Print`
-- `RandomSample`
-- `Rational`
-- `Rule`
-- `Set`
-- `Sin`
-- `Table`
-- `Times`
-- `True`
-- `Tuples`
-- `While`
+To check implemented function see `src/core.js`
 
-and many more functions, which are more specific to work __together with JS, DOM and dynamic expressions__. Please, see [Docs](docs/Introduction.md) for more information as well as [Wolfram Language JS Frontend](https://github.com/JerryI/wolfram-js-frontend) page.
+Please, see [Docs](i still did not write them, sorry) for more information as well as [Wolfram Language JS Frontend](https://github.com/JerryI/wolfram-js-frontend) page.
 
 __To help maintain this project [kirill.vasin@uni-a.de](https://www.paypal.com/donate/?hosted_button_id=BN9LWUUUJGW54) [PayPal](https://www.paypal.com/donate/?hosted_button_id=BN9LWUUUJGW54) Thank you 🍺__
 
 ## License
 
 Project is released under the GNU General Public License (GPL).
+
+# JavaScript Sandbox
+
+Sandbox demo is based on [Create a Coding Sandbox](https://joyofcode.xyz/create-a-coding-sandbox).
+
+

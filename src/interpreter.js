@@ -50,8 +50,7 @@ var interpretate = (d, env = {}) => {
   //if not a JSON array, probably a promise object or a function
   if (!(d instanceof Array) && !stringQ) return d;
 
-  //console.log("interpreting...");
-  //console.log(d);
+  
   //console.log(env);
 
 
@@ -69,6 +68,8 @@ var interpretate = (d, env = {}) => {
     args = d.slice(1, d.length);
   }
 
+  //console.log("interpreting...");
+  //console.log(name);
   //console.log(name);
 
   //checking the scope
@@ -267,7 +268,7 @@ let server = {
   init(socket) {
     this.socket = socket;
 
-    window.onerror = function (message, file, line, col, error) {
+    /*window.onerror = function (message, file, line, col, error) {
       socket.send('NotebookPopupFire["error", "'+error.message+'"]');
       console.log(error);
       return false;
@@ -285,7 +286,7 @@ let server = {
     console.error = function(e) {
       socket.send('NotebookPopupFire["error", "'+e+'"]');
       console.log(e);
-    };
+    };*/
   },
 
   //evaluate something on the master kernel and make a promise for the reply

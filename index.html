@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <title>JavaScript Sandbox</title>
+    <link rel="shortcut icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/sandbox/styles/style.css" />
+    <script type="module" src="/sandbox/main.ts"></script>
+  </head>
+  <body>
+    <div class="loading" data-loading>
+      <div class="loader"></div>
+      <h1>Loading Sandbox</h1>
+    </div>
+
+    <div class="modal hidden" data-modal>
+    </div>   
+
+    
+
+    <section class="code" data-code>
+      
+      <div class="editor-container">
+        <div class="editor" data-editor></div>
+        <div class="editor" data-editor-js></div>
+      </div>
+      <div class="editor-menu">
+        <button data-save>Save</button>
+        <button data-export>Export</button>
+        <button data-import>Import</button>
+        <button data-includes >Includes</button>
+        <button data-open style="background-color:rgb(90, 90, 90)">Examples</button>
+      </div>  
+         
+    </section>
+     
+
+    <section class="result">
+      
+      <div class="output" data-output>
+        <button class="fullscreen" data-fullbutton>Full</button>
+        <iframe data-iframe></iframe>
+        <div class="errors" data-errors></div>
+      </div>
+      <div class="source" data-source-holder>
+        <button class="logs" data-logbutton>📜 Logs</button>
+        <div data-source></div>
+      </div>
+      
+    </section>
+  </body>
+</html>
