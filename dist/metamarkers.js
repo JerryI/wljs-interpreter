@@ -56,7 +56,7 @@ core.First = async (args, env) => {
 
 //to execute code inside the container (injecting)
 core.Placed = async (args, env) => {
-  console.log(args[1]);
+  //console.log(args[1]);
   let evaluated = await interpretate(args[1], env);
 
   if (core._typeof(evaluated) != 'MetaMarkers') {
@@ -78,11 +78,11 @@ core.Placed = async (args, env) => {
   
   //execute inside the container
   console.log('try!');
-  console.log(instanceEnv);
+  //console.log(instanceEnv);
   const copy = {...instanceEnv};
   copy.scope = {...copy.scope, ...env.scope};
 
   await interpretate(args[0], copy);
-  console.log('done!');
+  //console.log('done!');
   return null;
 }
