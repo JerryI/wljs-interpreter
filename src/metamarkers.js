@@ -7,13 +7,13 @@ core.MetaMarker = (args, env) => {
 
   console.log('instance '+inst+'is marked as '+marker);
   if (marker in MetaMarkers) {
-    MetaMarkers[marker][inst] = env.root;
+    MetaMarkers[marker][inst] = env;
   } else {
     MetaMarkers[marker] = {};
-    MetaMarkers[marker][inst] = env.root;
+    MetaMarkers[marker][inst] = env;
   }
 
-  return inst;
+  return null;
 }
 
 core.MetaMarker.update = (args, env) => {
@@ -30,17 +30,17 @@ core.MetaMarker.destroy = (args, env) => {
   delete MetaMarkers[marker][env.root.instance];
 }  
 
-core.FindMetaMarker = (args, env) => {
+core.FindMetaMarker = async (args, env) => {
   const marker = interpretate(args[0], env);
 
   if (marker in MetaMarkers) {
     console.log('found one!');
-    const arr =  Object.keys(MetaMarkers[marker]);
+    const arr =  Object.values(MetaMarkers[marker]);
     const list = arr.map((el)=>{
-      return ['FrontEndInstance', el]
+      return ['MetaMarkers', el]
     });
 
-    console.log('list of instances');
+    console.log('list of markers');
     console.log(list);
 
     return list;
@@ -49,22 +49,21 @@ core.FindMetaMarker = (args, env) => {
   return [];
 }
 
-core.First = (args, env) => {
-  const dt = interpretate(args[0], env);
-  if (dt instanceof Array) return dt[0];
-  return ['First', dt];
+core.First = async (args, env) => {
+  const dt = await interpretate(args[0], env);
+  return dt[0];
 }
 
 //to execute code inside the container (injecting)
-core.Placed = (args, env) => {
+core.Placed = async (args, env) => {
   console.log(args[1]);
-  let evaluated = args[1];
+  let evaluated = await interpretate(args[1], env);
 
-  if (core._typeof(evaluated) != 'FrontEndInstance') {
-    evaluated = interpretate(args[1], env);
-    console.log(evaluated);
+  if (core._typeof(evaluated) != 'MetaMarkers') {
+    evaluated = await interpretate(args[1], env);
+    //console.log(evaluated);
 
-    if (core._typeof(evaluated) != 'FrontEndInstance') {
+    if (core._typeof(evaluated) != 'MetaMarkers') {
 
       console.error('cannot place as defined');
       console.log(args);
@@ -73,11 +72,17 @@ core.Placed = (args, env) => {
     }
   }
 
-  const instanceId = interpretate(evaluated[1], env);
-  console.log('instance id: '+instanceId);
-
-  console.log(InstancesHashMap[instanceId]);
+  const instanceEnv = evaluated[1];
+  
+  
   
   //execute inside the container
-  return interpretate(args[0], {...InstancesHashMap[instanceId].env});
+  console.log('try!');
+  console.log(instanceEnv);
+  const copy = {...instanceEnv};
+  copy.scope = {...copy.scope, ...env.scope};
+
+  await interpretate(args[0], copy);
+  console.log('done!');
+  return null;
 }

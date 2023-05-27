@@ -59,12 +59,15 @@ body {
   width: 100%;
 }
 
-
+.button-container {
+  position: absolute;
+  margin-left: var(--spacing-2);
+}
 
 .fullscreen {
-  position: absolute;
+  position: relative;
   padding: var(--spacing-1) var(--spacing-2);
-  margin: var(--spacing-2);
+  margin-top: var(--spacing-2);
   font-size: 0.8em;
   font-weight: 500;
   color: var(--white-98);
@@ -73,8 +76,13 @@ body {
   border-radius: var(--radius);
   cursor: pointer;
   opacity: 0.5;
-
 }
+
+.activated {
+  background:rgb(94, 125, 126);
+}
+
+
 
 .fullscreen:hover {
 
@@ -328,4 +336,8 @@ xmp {
 
 .hidden {
   display: none
+}
+
+.tall {
+  height: 80%;
 }

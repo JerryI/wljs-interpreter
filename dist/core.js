@@ -473,6 +473,28 @@ core.FrontEndExecutable = async (args, env) => {
       await interpretate(['While', ...args], env);
     }
   } 
+
+  core.If = async (args, env) => {
+    const cond = await interpretate(args[0], env);
+    if (cond) {
+      return await interpretate(args[1], env);
+    } else {
+      if (args.length > 2) return await interpretate(args[2], env);
+      return null;
+    }
+  }
+
+  core.Less = async (args, env) => {
+    if ((await interpretate(args[0], env)) < (await interpretate(args[1], env))) return true; else return false;
+  }
+
+  core.Greater = async (args, env) => {
+    if ((await interpretate(args[0], env)) > (await interpretate(args[1], env))) return true; else return false;
+  }  
+
+  core.Equals = async (args, env) => {
+    if ((await interpretate(args[0], env)) === (await interpretate(args[1], env))) return true; else return false;
+  }  
   
   
   core.Alert = (args, env) => {
@@ -808,7 +830,7 @@ core.With = async (args, env) => {
   }
 
   return await interpretate(args[1], copy);
-}
+} 
 
 core.Map = async (args, env) => {
   const func = args[0];

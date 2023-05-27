@@ -52,9 +52,14 @@ body {
   width: 100%;
 }
 
+.button-container {
+  margin-left: var(--spacing-2);
+  position: absolute;
+}
+
 .fullscreen {
   padding: var(--spacing-1) var(--spacing-2);
-  margin: var(--spacing-2);
+  margin-top: var(--spacing-2);
   color: var(--white-98);
   background-color: var(--gray-10);
   border-radius: var(--radius);
@@ -63,7 +68,11 @@ body {
   border: none;
   font-size: .8em;
   font-weight: 500;
-  position: absolute;
+  position: relative;
+}
+
+.activated {
+  background: #5e7d7e;
 }
 
 .fullscreen:hover {
@@ -308,6 +317,10 @@ pre, xmp {
 
 .hidden {
   display: none;
+}
+
+.tall {
+  height: 80%;
 }
 
 /*# sourceMappingURL=index.a89c0ca8.css.map */

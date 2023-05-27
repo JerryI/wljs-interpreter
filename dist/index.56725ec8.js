@@ -589,6 +589,7 @@ let jscompiled;
 let params = {};
 let includes = [];
 let logElement;
+let paused = false;
 const examples = [
     {
         title: "Moving balls",
@@ -604,6 +605,11 @@ const examples = [
         title: "3D Graphics",
         desc: "Water shaders, camera control and SLERP of matrixes",
         url: "./boat.txt"
+    },
+    {
+        title: "Meta markers",
+        desc: "An example of evaluating expressions inside already existing container",
+        url: "./meta.txt"
     },
     {
         title: "Low-level dynamic",
@@ -683,11 +689,11 @@ function updateIframe(code, codejs) {
     const inc = includes.map((e)=>`<script type="module" src="${e}"></script>`).join();
     const source = /* html */ `
       <html>
-      <head>
-        <base href="${window.location.origin}" />
-        <link rel="stylesheet" href="/iframe.css">
+      <head>  
+     
+        <link rel="stylesheet" href="iframe.css">
         <script>             
-        window.console = {
+        /*window.777console = {
           log: function(str){
               //REM: Forward the string to the top window.
               //REM: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
@@ -703,7 +709,7 @@ function updateIframe(code, codejs) {
             //REM: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
             window.top.postMessage({kind: 'error', 'text':JSON.stringify(str)}, '*');
           }                  
-        };
+        };*/
         window.onerror = (a, b, c, d, e) => {
 
           window.top.postMessage({kind: 'error', 'text': a}, '*');
@@ -721,8 +727,8 @@ function updateIframe(code, codejs) {
         <div id="canvas"></div>
 
         
-        <script type="module" src="/interpreter.js"></script>
-        <script type="module" src="/core.js"></script>
+        <script type="module" src="interpreter.js"></script>
+        <script type="module" src="core.js"></script>
 
         ${inc}
         
@@ -771,6 +777,7 @@ function logError(error) {
     (0, _dom.elements).errors.innerHTML = errorHtml;
 }
 async function updateUI() {
+    if (paused) return;
     if (state === "editing") {
         (0, _dom.showIframe)();
         const code = (0, _cmEditor.cmEditor).state.doc.toString();
@@ -882,13 +889,23 @@ function createExamplesModal() {
       ${rows}
     </tbody>
   </table>`;
+    (0, _dom.elements).modal.classList.add("tall");
     (0, _dom.elements).modal.classList.remove("hidden");
     examples.forEach((e, i)=>{
         document.getElementById("example-" + i).addEventListener("click", ()=>{
             (0, _dom.elements).modal.classList.add("hidden");
+            (0, _dom.elements).modal.classList.remove("tall");
             openExample(e.url);
         });
     });
+    const listener = (ev)=>{
+        if (ev.target !== (0, _dom.elements).modal) {
+            (0, _dom.elements).modal.classList.add("hidden");
+            (0, _dom.elements).modal.innerHTML = ``;
+            window.removeEventListener("click", listener);
+        }
+    };
+    setTimeout(()=>window.addEventListener("click", listener), 300);
 }
 function createIncludesModal() {
     (0, _dom.elements).modal.innerHTML = ``;
@@ -977,6 +994,10 @@ function loadState() {
 (0, _dom.elements).buttonImport.addEventListener("click", ()=>createImportModal());
 (0, _dom.elements).buttonExport.addEventListener("click", ()=>createExportModal());
 (0, _dom.elements).buttonSave.addEventListener("click", ()=>saveState());
+(0, _dom.elements).buttonPause.addEventListener("click", ()=>{
+    paused = !paused;
+    (0, _dom.elements).buttonPause.classList.toggle("activated");
+});
 loadState();
 
 },{"./lib/monaco/cmEditor":"dwkPU","./utils/dom":"bo4L5","./utils/helpers":"5VvMA","jsoncrush":"eNX0j","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dwkPU":[function(require,module,exports) {
@@ -62728,6 +62749,7 @@ const elements = {
     buttonExport: getElement("[data-export]"),
     buttonIncludes: getElement("[data-includes]"),
     buttonOpen: getElement("[data-open]"),
+    buttonPause: getElement("[data-pausebutton]"),
     modal: getElement("[data-modal]")
 };
 

@@ -36,6 +36,7 @@ export const elements = {
   buttonExport:  getElement('[data-export]') as HTMLDivElement,
   buttonIncludes:  getElement('[data-includes]') as HTMLDivElement,  
   buttonOpen:  getElement('[data-open]') as HTMLDivElement,
+  buttonPause: getElement('[data-pausebutton]') as HTMLDivElement,
 
   modal: getElement('[data-modal]') as HTMLDivElement
 }

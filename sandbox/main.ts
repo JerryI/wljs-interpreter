@@ -25,11 +25,13 @@ let includes : Array<string> = [];
 
 let logElement : any;
 
+let paused : boolean = false;
+
 const examples = [
-  {
+  {  
     title: 'Moving balls',
     desc: 'A smooth graphics 2D animation purely in browser',
-    url: './simple.txt' 
+    url: './simple.txt'  
   },
   {
     title: 'Lines animation',
@@ -40,7 +42,12 @@ const examples = [
     title: '3D Graphics',
     desc: 'Water shaders, camera control and SLERP of matrixes',
     url: './boat.txt' 
-  },   
+  },    
+  {
+    title: 'Meta markers',
+    desc: 'An example of evaluating expressions inside already existing container',
+    url: './meta.txt' 
+  },  
   {
     title: 'Low-level dynamic',
     desc: 'An example of using frontend objects (internal data structure)',
@@ -51,7 +58,7 @@ const examples = [
     desc: 'A simple demo with JS function called from WL',
     url: './jssimple.txt' 
   },       
-] 
+]  
 
 let kernelSocket = {
   status: false,
@@ -76,7 +83,7 @@ class Deferred {
 
 
 let messageKernelError = 0;
-
+ 
 const registerConnection  = () : void => {
   if (kernelSocket.connecting) return;
 
@@ -117,12 +124,12 @@ async function transpileCode(code: string): Promise<TranspiledCodeType> {
     return {
       iframeCode: preCompiled
     };
-  }
+  } 
 
   const p = new Deferred();
   kernelSocket.nextPromise = p.resolve;
   kernelSocket.socket.send('transpile["'+code.replace(/(\r\n|\n|\r)/gm, "").replaceAll('\\\"', '\\\\\"').replaceAll('\"', '\\"')+'"]');
-
+ 
   const transpiled = await p.promise;
   preCompiled = transpiled;
 
@@ -131,22 +138,22 @@ async function transpileCode(code: string): Promise<TranspiledCodeType> {
     iframeCode: transpiled,
     // this is passed to `updateSource`
 
-  }
-}
+  }   
+}   
 
 function updateIframe(code: Object, codejs: string): void {
   compiled = code;
   jscompiled = codejs;
- 
+  
   const inc = includes.map((e)=>`<script type="module" src="${e}"></script>`).join();
      
   const source = /* html */ `
       <html>
-      <head>
+      <head>  
      
         <link rel="stylesheet" href="iframe.css">
         <script>             
-        window.console = {
+        /*window.777console = {
           log: function(str){
               //REM: Forward the string to the top window.
               //REM: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
@@ -162,7 +169,7 @@ function updateIframe(code: Object, codejs: string): void {
             //REM: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
             window.top.postMessage({kind: 'error', 'text':JSON.stringify(str)}, '*');
           }                  
-        };
+        };*/
         window.onerror = (a, b, c, d, e) => {
 
           window.top.postMessage({kind: 'error', 'text': a}, '*');
@@ -234,7 +241,8 @@ function logError(error: string): void {
   elements.errors.innerHTML = errorHtml
 }
 
-async function updateUI(): void {
+async function updateUI(): Promise<void> {
+  if (paused) return;
   if (state === 'editing') {
     showIframe()
     const code = cmEditor.state.doc.toString()
@@ -318,7 +326,7 @@ function loadExample(r: any) {
     elements.sourceholder.classList.remove('shrink');
     elements.output.classList.remove('expand');
   }
-  if (params?.noCode) {
+  if (params?.noCode) { 
     elements.code.classList.add('hidden');      
   } else {
     elements.code.classList.remove('hidden');
@@ -371,15 +379,28 @@ function createExamplesModal() {
     </tbody>
   </table>`;
 
+  elements.modal.classList.add('tall');
+
   elements.modal.classList.remove('hidden');
 
   examples.forEach((e, i) => {
     document.getElementById('example-'+i).addEventListener('click', ()=>{
       elements.modal.classList.add('hidden');
+      elements.modal.classList.remove('tall');
       openExample(e.url);
       
     })
   });
+
+  const listener = (ev)=>{
+    if (ev.target !== elements.modal ) {
+      elements.modal.classList.add('hidden');
+      elements.modal.innerHTML = ``;
+      window.removeEventListener('click', listener);
+    }
+  };
+
+  setTimeout(() => window.addEventListener('click', listener), 300);  
 
 
 }
@@ -503,6 +524,11 @@ elements.buttonImport.addEventListener('click', ()=>createImportModal());
 elements.buttonExport.addEventListener('click', ()=>createExportModal());
 
 elements.buttonSave.addEventListener('click', ()=>saveState());
+
+elements.buttonPause.addEventListener('click', () => {
+  paused = !paused;
+  elements.buttonPause.classList.toggle('activated');
+});
 
 loadState();
 
