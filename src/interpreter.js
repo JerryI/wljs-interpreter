@@ -268,7 +268,7 @@ let server = {
   init(socket) {
     this.socket = socket;
 
-    /*window.onerror = function (message, file, line, col, error) {
+    window.onerror = function (message, file, line, col, error) {
       socket.send('NotebookPopupFire["error", "'+error.message+'"]');
       console.log(error);
       return false;
@@ -286,7 +286,7 @@ let server = {
     console.error = function(e) {
       socket.send('NotebookPopupFire["error", "'+e+'"]');
       console.log(e);
-    };*/
+    };
   },
 
   //evaluate something on the master kernel and make a promise for the reply
