@@ -153,7 +153,7 @@ function updateIframe(code: Object, codejs: string): void {
      
         <link rel="stylesheet" href="iframe.css">
         <script>             
-        /*window.777console = {
+        window.console = {
           log: function(str){
               //REM: Forward the string to the top window.
               //REM: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
@@ -169,7 +169,7 @@ function updateIframe(code: Object, codejs: string): void {
             //REM: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
             window.top.postMessage({kind: 'error', 'text':JSON.stringify(str)}, '*');
           }                  
-        };*/
+        };
         window.onerror = (a, b, c, d, e) => {
 
           window.top.postMessage({kind: 'error', 'text': a}, '*');
