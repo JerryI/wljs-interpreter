@@ -185,7 +185,7 @@ function updateIframe(code: Object, codejs: string): void {
       </head>
       <body>
         <div id="canvas"></div>
-
+ 
         
         <script type="module" src="interpreter.js"></script>
         <script type="module" src="core.js"></script>

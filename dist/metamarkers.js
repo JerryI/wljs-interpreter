@@ -23,9 +23,9 @@ core.MetaMarker.update = (args, env) => {
 core.MetaMarker.destroy = (args, env) => {
   const marker = interpretate(args[0], env);
   console.log('dispose marker for instance '+env.root.instance);
-  console.log('in the context');
-  console.log(env);
-  console.log(MetaMarkers[marker]);
+  //console.log('in the context');
+  //console.log(env);
+  //console.log(MetaMarkers[marker]);
 
   delete MetaMarkers[marker][env.root.instance];
 }  
@@ -40,8 +40,8 @@ core.FindMetaMarker = async (args, env) => {
       return ['MetaMarkers', el]
     });
 
-    console.log('list of markers');
-    console.log(list);
+    //console.log('list of markers');
+    //console.log(list);
 
     return list;
   }
