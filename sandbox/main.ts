@@ -19,6 +19,8 @@ let preCompiled : Object;
 let compiled : Object;
 let jscompiled: string;
 
+let override : boolean = false;
+
 let params = {};
 
 let includes : Array<string> = [];
@@ -315,7 +317,13 @@ function loadExample(r: any) {
 
   params = r?.params;
   
+  
   updateUI();
+
+  if (override) {
+    elements.loading.classList.add('hidden');
+    return;
+  }
 
   if (params?.noLogs) {
     elements.source.classList.add('hidden');
@@ -352,10 +360,12 @@ elements.fullbutton.addEventListener('click', ()=>{
 });
 
 function toggleFull() {
+  console.log('toggle full')
   elements.code.classList.toggle('hidden');
 }
 
 function toggleLogs() {
+  console.log('toggle logs');
   elements.source.classList.toggle('hidden');
   elements.sourceholder.classList.toggle('shrink');
   elements.output.classList.toggle('expand');
@@ -506,8 +516,38 @@ function saveState() {
   }));
 }
 
+function checkURL() : boolean {
+  const s : string = window.location.search;
+  const myURL = new URL(window.location.href);
+  const params:any = {};
+
+  myURL.searchParams.forEach((value, name, searchParams) => {
+    console.log(name, value, myURL.searchParams === searchParams);
+    params[name] = value;
+  });
+
+  console.log(params);
+  console.log('checked!');
+
+  if (params.full == 'true') {toggleFull();
+    override = true;
+  }
+  if (params.logs == 'false') {toggleLogs();
+    override = true;
+  }
+
+  if (params.example) {
+    openExample('./'+params.example);
+    return true;
+  }
+
+  return false;
+}
+
 
 function loadState() {
+  if (checkURL()) return;
+
   const item = localStorage.getItem("wljs-state");
   if (item) {
     const obj = JSON.parse(item);

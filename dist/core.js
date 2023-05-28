@@ -57,24 +57,24 @@ core.FrontEndExecutable = async (args, env) => {
     return 'undefined';
   }
   
-  core._getRules = function(args, env) {
+  core._getRules = async function(args, env) {
     let rules = {};
     if (env.hold) {
-      args.forEach((el)=>{
+      for (const el of args) {
         if(el instanceof Array) {
           if (el[0] === 'Rule') {
             rules[interpretate(el[1], {...env, hold:false})] = el[2];
           }
         }
-      });
+      };
     } else {
-      args.forEach((el)=>{
+      for (const el of args) {
         if(el instanceof Array) {
           if (el[0] === 'Rule') {
-            rules[interpretate(el[1], {...env, hold:false})] = interpretate(el[2], env);
+            rules[interpretate(el[1], {...env, hold:false})] = await interpretate(el[2], env);
           }
         }
-      });
+      };
     }
 
     return rules; 
@@ -404,15 +404,6 @@ core.FrontEndExecutable = async (args, env) => {
     return core._getRules(args, env);
   };
 
-  core.Rule = function (args, env) {
-    //actaully an function generator. can be improved
-    const left  = interpretate(args[0], env);
-    const right = interpretate(args[1], env);
-  
-    return new jsRule(left, right);
-  };
-  
-  core.Rule.update = core.Rule;
 
   core.Function = (args, env) => {
     //void
