@@ -159,22 +159,22 @@ function updateIframe(code: Object, codejs: string): void {
           log: function(str){
               //REM: Forward the string to the top window.
               //REM: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-              window.top.postMessage({kind: 'log', 'text':JSON.stringify(str)}, '*');
+              window.parent.postMessage({kind: 'log', 'text':JSON.stringify(str)}, '*');
           },
           warn: function(str){
             //REM: Forward the string to the top window.
             //REM: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-            window.top.postMessage({kind: 'log', 'text':JSON.stringify(str)}, '*');
+            window.parent.postMessage({kind: 'log', 'text':JSON.stringify(str)}, '*');
           },
           error: function(str){
             //REM: Forward the string to the top window.
             //REM: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-            window.top.postMessage({kind: 'error', 'text':JSON.stringify(str)}, '*');
+            window.parent.postMessage({kind: 'error', 'text':JSON.stringify(str)}, '*');
           }                  
         };
         window.onerror = (a, b, c, d, e) => {
 
-          window.top.postMessage({kind: 'error', 'text': a}, '*');
+          window.parent.postMessage({kind: 'error', 'text': a}, '*');
         };
         function isElement(o){
           return (
@@ -198,7 +198,7 @@ function updateIframe(code: Object, codejs: string): void {
         <script type="module">
           let global = {};
           let env = {global: global};
-          window.top.postMessage({kind: 'ready'}, '*');
+          window.parent.postMessage({kind: 'ready'}, '*');
 
           window.addEventListener("message", async ({ data, source }) => {
             
