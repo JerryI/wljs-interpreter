@@ -455,6 +455,12 @@ core.FrontEndExecutable = async (args, env) => {
     return content;
   }
 
+  core.CompoundExpression.destroy = async (args, env) => {
+    for (const expr of args) {
+      await interpretate(expr, env);
+    }    
+  }
+
   core.While = async (args, env) => {
     //sequential execution
     const condition = await interpretate(args[0], env);
@@ -853,6 +859,19 @@ core.Brown = (args, env) => {
 core.Sqrt = async (args, env) => {
   return Math.sqrt(await interpretate(args[0], env));
 }
+
+core.Rule = async (args, env) => {
+  const key = await interpretate(args[0], env);
+  const val = await interpretate(args[1], env)
+  if (env.Association) {
+    env.Association[key] = val;
+    return;
+  } else {
+    return {key: val};
+  }
+}
+
+core.Pi = () => Math.PI
 
 window.core = core;
 
