@@ -737,9 +737,9 @@ core.FrontEndExecutable = async (args, env) => {
     //update
     core[name].data = args[1];
 
-    core[name].instances.forEach((inst) => {
+    for (const inst of core[name].instances) {
       inst.update();
-    });    
+    };    
   }
 
   /*core.RGBColor =  async (args, env) => {
