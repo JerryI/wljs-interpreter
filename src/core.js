@@ -731,6 +731,17 @@ core.FrontEndExecutable = async (args, env) => {
 
   core.JSObject.update = core.JSObject;
 
+  core.FrontUpdateSymbol = (args, env) => {
+    const name = interpretate(args[0], env);
+    console.log("update");
+    //update
+    core[name].data = args[1];
+
+    core[name].instances.forEach((inst) => {
+      inst.update();
+    });    
+  }
+
   /*core.RGBColor =  async (args, env) => {
     const color = [];
     for (const col of args) {

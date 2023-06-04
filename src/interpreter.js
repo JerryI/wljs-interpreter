@@ -133,15 +133,6 @@ var interpretate = (d, env = {}) => {
     }
   };
 
-
-  if (env.unsafe) {
-    console.warn('Symbol '+name+' is undefined in any contextes available. Asking kernel...');
-    console.warn('Heavy usage of Kernel functions might lead to slow-down. Please consider to use native expressions available on the frontend.');  
-  } else {
-    throw('Symbol '+name+' is undefined in any contextes available. Kernel evaluation is not possible in safe mode.');
-    return undefined;
-  }
-
   return (interpretate.anonymous(d, env));
 };
 
@@ -155,81 +146,50 @@ interpretate.contextExpand = (context) => {
   interpretate.contextes.push(context);
 }
 
-interpretate.anonymous = (d, org) => {
-
+interpretate.anonymous = async (d, org) => {
   //TODO Check if it set delayed or set... if set, then one need only to cache it
   if (!server.socket) {
     console.error('Symbol '+name+' is undefined in any contextes available. Communication with Wolfram Kernel is not possible for now.');
-  }
-
-  //limit the reqursion
-  if (org.global.stackKernelCall) {
-    org.global.stackKernelCall++; 
-    if (org.global.stackKernelCall > 64) return '$MaxReqursionExceeded';
-  } else {
-    org.global.stackKernelCall = 0;
-  }
-    
-
-  //server.askKernel(`ImportString["${JSON.stringify(d)}", "JSONExpression"]`)
-  //extend core's functions
-  let name;
-  
-  if (d instanceof Array)
-    name = d[0]; //subvalue
-  else
-    name = d;   //symbol
-
-  core[name] = async (args, env) => {
-    if (env.global.stackKernelCall) {
-      env.global.stackKernelCall++; 
-      if (env.global.stackKernelCall > 64) return '$MaxReqursionExceeded';
-    } else {
-      env.global.stackKernelCall = 0;
-    }
-
-
-    let pack;
-
-    if (args) { //subvalue
-      const cArgs = [];
-      for (const expr of args) {
-        cArgs.push(interpretate.toJSON(await interpretate(expr, env)));
-      }
-
-      pack = [name, ...cArgs];
-    } else { //just a symbol
-      pack = name
-    }
-    //in a case if we want to track this symbol and call .update method on a virtual function
-    console.log('hu');
-    
-    if (env.root) {
-      env.local.trackerId = server.addTracker(name, env.root.instance);
-    }
-    //this is right. since we need it for each instance.
-    const q = await server.askKernel(`ImportString["${JSON.stringify(pack).replaceAll('\\\"', '\\\\\"').replaceAll('\"', '\\"')}", "ExpressionJSON"]`);
-    //return q;
-    //console.log('received!: '+JSON.stringify(q));
-    return await interpretate(q, {...env, novirtual: false});
-  }
-
-  core[name].update = (args, env) => {
-    console.error('updading anonymous symbols is not possble');
-  }
-
-  core[name].destroy = (args, env) => {
-    //THIS WILL NEVER WORK. TODO
-    console.log('anonymous symbols was destroyed');
-    console.error('nobody knows the instance assigned to it ;(');
-    console.log(env.local);
-    server.removeTracker(env.local.trackerId);
   }  
 
-  core[name].virtual = true;
+  let name;
+  if (d instanceof Array) {
+    throw('subvalues are not supported for '+d[0]);
+  } else {
+    name = d;   //symbol
+  }
 
-  //reevaluate it again
-  console.warn(JSON.stringify(d));
+  core[name] = async (args, env) => {
+    console.log('calling our symbol...');
+    //evaluate in the context
+    const data = await interpretate(core[name].data, env);
+
+    if (env.root && !env.novirtual) core[name].instances.push(env.root); //if it was evaluated insdide the container, then, add it to the tracking list
+    if (env.hold) return ['JSObject', core[name].data];
+
+    return data;
+  }
+
+  core[name].update = async (args, env) => {
+    //evaluate in the context
+    const data = await interpretate(core[name].data, env);
+    if (env.hold) return ['JSObject', data];
+    return data;
+  }  
+
+  core[name].destroy = async (args, env) => {
+    console.warn('destroy method is not implemented');
+  }  
+
+  core[name].data = await server.askKernel(name); //get the data
+  console.log('got the data. will be cached...');
+  console.log(core[name].data);
+
+  server.addTracker(name);
+
+  core[name].virtual = true;
+  core[name].instances = [];
+
   return interpretate(d, org);
 }
 
@@ -338,8 +298,8 @@ let server = {
     this.socket.send('NotebookGarbagePut["'+uid+'"];');
   },
 
-  addTracker(name, virtualInstance) {
-    console.error('tracking feature is not implemented');
+  addTracker(name) {
+    this.talkKernel('Experimental`ValueFunction['+name+'] = Function[x, FrontSubmit[FrontUpdateSymbol["'+name+'", x]]]')
   }
 }
  
