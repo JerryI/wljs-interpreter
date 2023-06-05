@@ -18,8 +18,10 @@ or if you wolframscript
 git clone https://github.com/JerryI/wljs-interpreter
 cd wljs-interpreter
 wolframscript -f transpile.wls
+npm i
+npm start
 ```
-and reload Github page.
+and reload the page.
 
 __This is a core component of [Wolfram JS Frontend](https://github.com/JerryI/wolfram-js-frontend) project__
 but one can use it independently as well
@@ -40,7 +42,6 @@ This repository provides only the minimum-necessary set of functions, to bring `
 
 - [wljs-graphics-d3](https://github.com/JerryI/wljs-graphics-d3)
 - [wljs-graphics3d-threejs](https://github.com/JerryI/Mathematica-ThreeJS-graphics-engine)
-- [wljs-inputs](https://github.com/JerryI/wljs-inputs)
 
 Just simply include `dist/kernel.js` file into the web-page as a module using CDN (JSDelivr, StaticIO). Some of [build-in examples]((#examples)) already uses those packages. NO installation needed.
 
