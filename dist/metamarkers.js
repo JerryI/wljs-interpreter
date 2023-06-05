@@ -1,8 +1,8 @@
 //helps to find instance from server
 var MetaMarkers = {};
 
-core.MetaMarker = (args, env) => {
-  const marker = interpretate(args[0], env);
+core.MetaMarker = async (args, env) => {
+  const marker = await interpretate(args[0], env);
   const inst = env.root.instance;
 
   console.log('instance '+inst+'is marked as '+marker);
@@ -20,8 +20,8 @@ core.MetaMarker.update = (args, env) => {
   //void
 }
 
-core.MetaMarker.destroy = (args, env) => {
-  const marker = interpretate(args[0], env);
+core.MetaMarker.destroy = async (args, env) => {
+  const marker = await interpretate(args[0], env);
   console.log('dispose marker for instance '+env.root.instance);
   //console.log('in the context');
   //console.log(env);
@@ -31,7 +31,7 @@ core.MetaMarker.destroy = (args, env) => {
 }  
 
 core.FindMetaMarker = async (args, env) => {
-  const marker = interpretate(args[0], env);
+  const marker = await interpretate(args[0], env);
 
   if (marker in MetaMarkers) {
     console.log('found one!');
