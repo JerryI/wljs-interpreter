@@ -46,6 +46,16 @@ const examples = [
     url: './boat.txt' 
   },    
   {
+    title: 'Canvas',
+    desc: 'JS Canvas API used together with Wolfram',
+    url: './canvas.txt' 
+  },    
+  {
+    title: 'Sinewave',
+    desc: 'JS Canvas API and sine animation',
+    url: './sine.txt' 
+  },  
+  {
     title: 'Meta markers',
     desc: 'An example of evaluating expressions inside already existing container',
     url: './meta.txt' 
@@ -434,9 +444,9 @@ function createIncludesModal() {
   };
 
   setTimeout(() => window.addEventListener('click', listener), 300);
-
+ 
   elements.modal.classList.remove('hidden');
-
+  
   textArea.onchange = (str) => {
     includes = str.target.value.split('\n');
   }
@@ -469,7 +479,7 @@ function createExportModal() {
   };
 
   setTimeout(() => window.addEventListener('click', listener), 300);
-
+ 
   elements.modal.classList.remove('hidden');
 }
 

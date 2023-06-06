@@ -231,6 +231,8 @@ core.FrontEndExecutable = async (args, env) => {
     //TODO: evaluate it before sending its original symbolic form
     return x + y;
   }  
+
+  core.Plus.update = core.Plus;
   
   core.Rational = function (args, env) {
     if (env.numerical === true) return interpretate(args[0], env)/interpretate(args[1], env);
@@ -296,6 +298,8 @@ core.FrontEndExecutable = async (args, env) => {
     //TODO: evaluate it before sending its original symbolic form
     return x * y;
   }
+
+  core.Times.update = core.Times;
 
   function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
@@ -418,7 +422,7 @@ core.FrontEndExecutable = async (args, env) => {
 
     return new Promise(resolve => {
       setTimeout(() => {
-        console.log("Finished Inner Timeout")
+        //console.log("Finished Inner Timeout")
         resolve('resolved');
       }, time);
     })  
@@ -572,14 +576,25 @@ core.FrontEndExecutable = async (args, env) => {
 
     //first stage - assign the first values
     for (let i=0; i<listOfRanges.length; ++i) {
-      //console.log();
+      //console.warn(listOfRanges[i]);
       listOfRanges[i].id =  listOfRanges[i].ranges.shift();
       //console.log('variable: '+listOfRanges[i].id);
 
       switch(listOfRanges[i].ranges.length) {
         case 1:
-          console.error('not supported by now');
-          return null;
+          const a = await interpretate(listOfRanges[i].ranges[0], {...env, numerical:true, novirtual:true, hold:false});
+          if (a instanceof Array) {
+            //array instead of a number
+            listOfRanges[i].ranges = [1, a.length];
+            listOfRanges[i].array = a;
+
+            break;
+          }
+          
+          const newranges = [1, a];   
+          listOfRanges[i].ranges = newranges;       
+        
+        break;
 
         case 2:
           //console.log('a numerical range');
@@ -609,6 +624,17 @@ core.FrontEndExecutable = async (args, env) => {
 
       switch(r.ranges.length) {
       case 2:
+        if (r.array) {
+
+          for(let i=r.ranges[0]; i<=r.ranges[1]; i++) {
+            //console.log('iterator '+r.id+' = '+i);
+            deepcopy[r.id] = () => r.array[i-1];
+            result.push(await f(level+1));
+          }
+
+          break;
+        }
+
         for(let i=r.ranges[0]; i<=r.ranges[1]; i++) {
           //console.log('iterator '+r.id+' = '+i);
           deepcopy[r.id] = () => i;
@@ -672,7 +698,7 @@ core.FrontEndExecutable = async (args, env) => {
     //create
     console.log("create");
     core[name] = async (args, env) => {
-      console.log('calling our symbol...');
+      //console.log('calling our symbol...');
       if (env.root && !env.novirtual) core[name].instances.push(env.root); //if it was evaluated insdide the container, then, add it to the tracking list
       if (env.hold) return ['JSObject', core[name].data];
 
