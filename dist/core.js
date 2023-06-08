@@ -470,7 +470,9 @@ core.FrontEndExecutable = async (args, env) => {
     const condition = await interpretate(args[0], env);
     //console.log('condition: ' + condition);
     if (condition) {
-      await interpretate(args[1], env);
+
+      //creating virtual objects is fobidden in cycles
+      await interpretate(args[1], {...env, novirtual: true});
       await interpretate(['While', ...args], env);
     }
   } 
@@ -599,16 +601,16 @@ core.FrontEndExecutable = async (args, env) => {
         case 2:
           //console.log('a numerical range');
   
-          listOfRanges[i].ranges[0] = await interpretate(listOfRanges[i].ranges[0], {...env, numerical:true, hold:false});
-          listOfRanges[i].ranges[1] = await interpretate(listOfRanges[i].ranges[1], {...env, numerical:true, hold:false});
+          listOfRanges[i].ranges[0] = await interpretate(listOfRanges[i].ranges[0], {...env, novirtual:true, numerical:true, hold:false});
+          listOfRanges[i].ranges[1] = await interpretate(listOfRanges[i].ranges[1], {...env, novirtual:true, numerical:true, hold:false});
         break;
   
         case 3:
           //console.log('a numerical range with defined step');
   
-          listOfRanges[i].ranges[0] = await interpretate(listOfRanges[i].ranges[0], {...env, numerical:true, hold:false});
-          listOfRanges[i].ranges[1] = await interpretate(listOfRanges[i].ranges[1], {...env, numerical:true, hold:false});
-          listOfRanges[i].ranges[2] = await interpretate(listOfRanges[i].ranges[2], {...env, numerical:true, hold:false});
+          listOfRanges[i].ranges[0] = await interpretate(listOfRanges[i].ranges[0], {...env, novirtual:true, numerical:true, hold:false});
+          listOfRanges[i].ranges[1] = await interpretate(listOfRanges[i].ranges[1], {...env, novirtual:true, numerical:true, hold:false});
+          listOfRanges[i].ranges[2] = await interpretate(listOfRanges[i].ranges[2], {...env, novirtual:true, numerical:true, hold:false});
         break;      
       }      
     }
@@ -679,10 +681,10 @@ core.FrontEndExecutable = async (args, env) => {
     const data = await interpretate(args[1], {...env, novirtual: true});
     const name = args[0];
 
-    console.log(name);
+    //console.log(name);
 
     if (name in core) {
-      console.log("update");
+      //console.log("update");
       //update
       core[name].data = data;
 

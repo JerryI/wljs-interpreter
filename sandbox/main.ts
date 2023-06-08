@@ -49,12 +49,12 @@ const examples = [
     title: 'Canvas',
     desc: 'JS Canvas API used together with Wolfram',
     url: './canvas.txt' 
-  },    
+  },       
   {
     title: 'Sinewave',
     desc: 'JS Canvas API and sine animation',
     url: './sine.txt' 
-  },  
+  },   
   {
     title: 'Meta markers',
     desc: 'An example of evaluating expressions inside already existing container',
