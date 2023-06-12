@@ -159,12 +159,21 @@ interpretate.anonymous = async (d, org) => {
     name = d;   //symbol
   }
 
+  const data = await server.askKernel(name); //get the data
+  console.log('got the data. will be cached...');
+  //console.error(JSON.stringify(data));
+
+  if ((typeof data == 'string' && !(data in core)) || typeof data == 'undefined') {
+    throw('Symbol '+data+' is not defined');  
+    return;
+  }
+
   core[name] = async (args, env) => {
     console.log('calling our symbol...');
     //evaluate in the context
     const data = await interpretate(core[name].data, env);
 
-    if (env.root && !env.novirtual) core[name].instances.push(env.root); //if it was evaluated insdide the container, then, add it to the tracking list
+    if (env.root && !env.novirtual) core[name].instances[env.root.uid] = env.root; //if it was evaluated insdide the container, then, add it to the tracking list
     if (env.hold) return ['JSObject', core[name].data];
 
     return data;
@@ -172,23 +181,25 @@ interpretate.anonymous = async (d, org) => {
 
   core[name].update = async (args, env) => {
     //evaluate in the context
+    
     const data = await interpretate(core[name].data, env);
     if (env.hold) return ['JSObject', data];
     return data;
   }  
 
   core[name].destroy = async (args, env) => {
-    console.warn('destroy method is not implemented');
+    
+    delete core[name].instances[env.root.uid];
+    console.warn(env.root.uid + ' was destroyed')
+    console.warn('external symbol was destoryed');
   }  
 
-  core[name].data = await server.askKernel(name); //get the data
-  console.log('got the data. will be cached...');
-  console.log(core[name].data);
+  core[name].data = data; //get the data
 
   server.addTracker(name);
 
   core[name].virtual = true;
-  core[name].instances = [];
+  core[name].instances = {};
 
   return interpretate(d, org);
 }
@@ -435,11 +446,12 @@ class ExecutableObject {
     //change the mathod of interpreting
     this.env.method = 'destroy';
 
-    if (this.virtual) console.log('virtual type');
+    if (this.virtual) console.log('virtual type was disposed'); else console.log('normal container was destoryed');
     
     //unregister from the storage class
     if (!this.virtual) this.storage.dropref(this);
     
+    //no need of this since we can destory them unsing env.global.stack
     let content;
     if (!this.virtual) content = this.storage.get(this.uid); else content = this.virtual;
 
@@ -453,14 +465,14 @@ class ExecutableObject {
   
   //update the state of it and recompute all objects inside
   //direction: BOTTOM -> TOP
-  update() {
+  update(top) {
     //console.log('updating frontend object...'+this.uid);
     //bubble up (only by 1 level... cuz some BUG, but can still work even with this limitation)
     if (this.parent instanceof ExecutableObject && !(this.child instanceof ExecutableObject)) return this.parent.update(); 
     
     if (this.virtual) {
       //console.log('-> virtual type');
-      //console.log('here we might have a change to detect, if there is no link to other FE, i.e. our object is dead');
+      //we can detect if it was destoryed
       //commit suicide because we alone ;(
       //this.destroy();
     }

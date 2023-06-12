@@ -100,9 +100,9 @@ window.EditorAutocomplete.extend([
         "info": "[Frontend Only] SetFrontEndObject[uid, data] Assign a new value to frontend object with name"  
     },
     {
-        "label": "FlipFrontEndObjects",
+        "label": "FlipSymbols",
         "type": "keyword",
-        "info": "[Frontend Only] FlipFrontEndObjects[uid1, uid2] flip two frontend object and fires update method on each"          
+        "info": "[Frontend Only] FlipSymbols[symbol1, symbol2] flip two frontend object and fires update method on each"          
     },
     {
         "label": "Alert",

@@ -45,7 +45,11 @@ core.FrontEndExecutable = async (args, env) => {
   
   core._typeof = function(args, env) {
     if (typeof args === 'string') {
-      return 'string';
+      if (args.charAt(0) === "'")
+        return 'string';
+      
+      //if (core[args].virtual) return 'variable';
+      return 'idunno'
     }
     if (typeof args === 'number') {
       return 'number';
@@ -341,6 +345,12 @@ core.FrontEndExecutable = async (args, env) => {
   core.Cos = async function (args, env) {
     return Math.cos(await interpretate(args[0], env));    
   }
+
+  core.Cos.update = core.Cos
+  core.Cos.destroy = () => {}
+
+  core.Sin.update = core.Sin
+  core.Sin.destroy = () => {}
 
   core.Tuples = async (args, env) => {
     const array = await interpretate(args[0], env);
@@ -673,6 +683,14 @@ core.FrontEndExecutable = async (args, env) => {
 
   }
 
+  core.Table.update = core.Table
+
+  core.Table.destroy = (args, env) => {
+    args.forEach((a) => {
+      interpretate(a, env);
+    })
+  }
+
   core.JSObject = (args, env) => {
     return args[0];
   }
@@ -688,11 +706,9 @@ core.FrontEndExecutable = async (args, env) => {
       //update
       core[name].data = data;
 
-      core[name].instances.forEach((inst) => {
+      for (const inst of Object.values(core[name].instances)) {
         inst.update();
-      });
-
-      
+      };    
 
       return;
     }
@@ -701,7 +717,7 @@ core.FrontEndExecutable = async (args, env) => {
     console.log("create");
     core[name] = async (args, env) => {
       //console.log('calling our symbol...');
-      if (env.root && !env.novirtual) core[name].instances.push(env.root); //if it was evaluated insdide the container, then, add it to the tracking list
+      if (env.root && !env.novirtual) core[name].instances[env.root.uid] = env.root; //if it was evaluated insdide the container, then, add it to the tracking list
       if (env.hold) return ['JSObject', core[name].data];
 
       return core[name].data;
@@ -713,10 +729,14 @@ core.FrontEndExecutable = async (args, env) => {
     }    
 
     core[name].virtual = true;
-    core[name].instances = [];
+    core[name].instances = {};
 
     core[name].data = data;
 
+  }
+
+  core.Set.destroy = (args, env) => {
+    interpretate(args[1], env);
   }
 
   core.SetDelayed = async (args, env) => {
@@ -765,7 +785,10 @@ core.FrontEndExecutable = async (args, env) => {
     //update
     core[name].data = args[1];
 
-    for (const inst of core[name].instances) {
+    console.log('instance list');
+    console.log(core[name].instances);
+
+    for (const inst of Object.values(core[name].instances)) {
       inst.update();
     };    
   }
@@ -868,6 +891,16 @@ core.With = async (args, env) => {
   return await interpretate(args[1], copy);
 } 
 
+core.With.update = core.With
+
+core.With.destroy = (args, env) => {
+  //destroy params
+  interpretate(args[0], env);
+
+  //destory args
+  interpretate(args[1], env);
+}
+
 core.Map = async (args, env) => {
   const func = args[0];
   const array = await interpretate(args[1], {...env, hold:false}); 
@@ -911,6 +944,7 @@ core.Rule = async (args, env) => {
 }
 
 core.Pi = () => Math.PI
+core.Pi.update = () => Math.PI
 
 window.core = core;
 
