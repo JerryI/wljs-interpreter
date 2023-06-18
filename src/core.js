@@ -792,7 +792,7 @@ core.FrontEndExecutable = async (args, env) => {
     core[name].data = args[1];
 
     console.log('instance list');
-    console.log(core[name].instances);
+    //console.log(core[name].instances);
 
     for (const inst of Object.values(core[name].instances)) {
       inst.update();
@@ -883,7 +883,7 @@ core.FrontEndExecutable = async (args, env) => {
 core.With = async (args, env) => {
   const params = await interpretate(args[0], {...env, hold:true});
 
-  console.log(JSON.stringify(params));
+  //console.log(JSON.stringify(params));
   
   let scope;
   if (env.scope) scope = {...env.scope}; else scope = {};

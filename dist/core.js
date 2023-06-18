@@ -133,11 +133,17 @@ core.FrontEndExecutable = async (args, env) => {
   
   core.SetFrontEndObject = function (args, env) {
     const key = interpretate(args[0], env);
+    if (!(key in ObjectHashMap)) { console.warn('not found'); return; }
     ObjectHashMap[key].update(args[1]);
   }
 
   core.CreateFrontEndObject = function (args, env) {
-    const key = interpretate(args[1], env);
+    const key = interpretate(args[0], env);
+
+    if (key in ObjectHashMap) {
+      console.warn('already exists!');
+      ObjectHashMap[key].update(args[1]);
+    }
 
     const ob =  new ObjectStorage(key); 
     ob.cached = true; 
@@ -786,7 +792,7 @@ core.FrontEndExecutable = async (args, env) => {
     core[name].data = args[1];
 
     console.log('instance list');
-    console.log(core[name].instances);
+    //console.log(core[name].instances);
 
     for (const inst of Object.values(core[name].instances)) {
       inst.update();
@@ -877,7 +883,7 @@ core.FrontEndExecutable = async (args, env) => {
 core.With = async (args, env) => {
   const params = await interpretate(args[0], {...env, hold:true});
 
-  console.log(JSON.stringify(params));
+  //console.log(JSON.stringify(params));
   
   let scope;
   if (env.scope) scope = {...env.scope}; else scope = {};

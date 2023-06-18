@@ -332,6 +332,7 @@ const renewGarbageTimer = () => {
 
 const collectGarbage = () => {
   console.log('collecting garbage...');
+  if (window.OfflineMode) return;
   Object.keys(ObjectHashMap).forEach((el)=>{
     ObjectHashMap[el].garbageCollect();
   });
@@ -487,7 +488,7 @@ class ExecutableObject {
     if (!this.virtual) 
       content = this.storage.get(this.uid); else content = this.virtual;
 
-    return interpretate(content, this.env);
+    return this.local.middleware(interpretate(content, this.env));
   }
 
   constructor(uid, env, virtual = false) {
@@ -505,6 +506,9 @@ class ExecutableObject {
     this.env.global.stack[uid] = this;
     
     this.env.root = this.env.root || {};
+
+    //middleware handler (identity)
+    this.local.middleware = (a) => a;
     
     //for virtual functions
     if (virtual) {

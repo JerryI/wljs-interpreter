@@ -56,6 +56,11 @@ const examples = [
     url: './sine.txt' 
   },   
   {
+    title: 'Logo Lines Trippy',
+    desc: 'Lines animated with linear interpolation',
+    url: './trip.txt' 
+  },   
+  {
     title: 'Meta markers',
     desc: 'An example of evaluating expressions inside already existing container',
     url: './meta.txt' 
