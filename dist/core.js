@@ -220,6 +220,12 @@ core.FrontEndExecutable = async (args, env) => {
     return Math.pow(val,p);
   }
 
+  core.E = () => Math.E
+  core.E.update = core.E
+  
+
+  core.Power.update = core.Power
+
   core.Plus = async (args, env) => {
     let x = await interpretate(args[0], env);
     let y = await interpretate(args[1], env);
