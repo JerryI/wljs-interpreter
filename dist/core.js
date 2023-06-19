@@ -944,6 +944,9 @@ core.Sqrt = async (args, env) => {
   return Math.sqrt(await interpretate(args[0], env));
 }
 
+core.Sqrt.update = core.Sqrt
+core.Sqrt.destroy = core.Sqrt
+
 core.Rule = async (args, env) => {
   const key = await interpretate(args[0], env);
   const val = await interpretate(args[1], env)
