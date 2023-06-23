@@ -25,7 +25,8 @@ and reload the page.
 
 __This is a core component of [Wolfram JS Frontend](https://github.com/JerryI/wolfram-js-frontend) project__
 but one can use it independently as well
-__Please, see [Docs](i still did not write them, sorry)__
+
+__[Docs](https://jerryi.github.io/wljs-docs/)__
 
 ---
 
