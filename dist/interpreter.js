@@ -3,8 +3,8 @@ const aflatten = (ary) => ary.flat(Infinity);
 class Deferred {
   promise = {}
   reject = {}
-  resolve = {}
-  
+  resolve = {}          
+
   constructor() {
     this.promise = new Promise((resolve, reject)=> {
       this.reject = reject
@@ -23,15 +23,16 @@ window.aflatten = aflatten;
 window.isNumeric = isNumeric;
 
 var interpretate = (d, env = {}) => {
-  interpretate.cnt = interpretate.cnt + 1;
-  
+  interpretate.cnt = interpretate.cnt + 1;          
+
   if (typeof d === 'undefined') {
     console.log('undefined object');
     return d;
   }
 
   const stringQ = typeof d === 'string';
-
+  //console.log(d);
+  //console.log(stringQ);
   //real string
   if (stringQ) {
     if (d.charAt(0) == "'") return d.slice(1, -1);
@@ -50,7 +51,7 @@ var interpretate = (d, env = {}) => {
   //if not a JSON array, probably a promise object or a function
   if (!(d instanceof Array) && !stringQ) return d;
 
-  
+
   //console.log(env);
 
 
@@ -76,20 +77,20 @@ var interpretate = (d, env = {}) => {
   if ('scope' in env) 
     if (name in env.scope) 
       return env.scope[name](args, env);
-     
+
 
 
   //checking the context
   if ('context' in env) {
     if (name in env.context) {
       //checking the method
-      
-      
+
+
       if ('method' in env) {
         if (!env.context[name][env.method]) return console.error('method '+env['method']+' is not defined for '+name);
         return env.context[name][env.method](args, env);
       }
-      
+
       //fake frontendexecutable
       //to bring local vars and etc
       if ('virtual' in env.context[name] && !(env.novirtual)) {
@@ -133,7 +134,7 @@ var interpretate = (d, env = {}) => {
     }
   };
 
-  return (interpretate.anonymous(d, env));
+  return (interpretate.anonymous(d, env));          
 };
 
 interpretate.cnt = 0;
@@ -161,9 +162,16 @@ interpretate.anonymous = async (d, org) => {
 
   const data = await server.askKernel(name); //get the data
   console.log('got the data. will be cached...');
-  //console.error(JSON.stringify(data));
+  console.error(JSON.stringify(data));
 
-  if ((typeof data == 'string' && !(data in core)) || typeof data == 'undefined') {
+  let symbolQ = typeof data === 'string';
+
+  if (symbolQ) {
+    if (data.charAt(0) == "'") symbolQ = false;
+    if (isNumeric(data)) symbolQ = false;
+  }
+
+  if ((symbolQ && !(data in core)) || typeof data == 'undefined') {
     throw('Symbol '+data+' is not defined');  
     return;
   }
@@ -181,14 +189,14 @@ interpretate.anonymous = async (d, org) => {
 
   core[name].update = async (args, env) => {
     //evaluate in the context
-    
+
     const data = await interpretate(core[name].data, env);
     if (env.hold) return ['JSObject', data];
     return data;
   }  
 
   core[name].destroy = async (args, env) => {
-    
+
     delete core[name].instances[env.root.uid];
     console.warn(env.root.uid + ' was destroyed')
     console.warn('external symbol was destoryed');
@@ -234,8 +242,8 @@ interpretate.toJSON = (d) => {
 //Server API
 let server = {
   promises : {},
-  socket: false,
-  
+  socket: false,          
+
   init(socket) {
     this.socket = socket;
 
@@ -266,9 +274,9 @@ let server = {
 
     const promise = new Deferred();
     this.promises[uid] = promise;
-    
+
     this.socket.send('NotebookPromise["'+uid+'", ""]['+expr+']');
-    
+
     return promise.promise 
   },
   //fire event on the secondary kernel (your working area) (no reply)
@@ -296,7 +304,7 @@ let server = {
     //console.error('askKernel is not implemented');
     //console.log('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
     this.socket.send('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
-    
+
     return promise.promise    
   },
 
@@ -313,7 +321,7 @@ let server = {
     this.talkKernel('Experimental`ValueFunction['+name+'] = Function[{y,x}, FrontSubmit[FrontUpdateSymbol["'+name+'", x]]]')
   }
 }
- 
+
 
 
 
@@ -352,27 +360,27 @@ class ObjectStorage {
       this.cache = ['GarbageCollected', 'Null'];
     }
 
-  }
-  
+  }         
+
   constructor(uid) {
     this.uid = uid;
     ObjectHashMap[uid] = this;
 
     //check garbage
     renewGarbageTimer();
-  } 
-  
+  }           
+
   //assign an instance of FrontEndExecutable to it
   assign(obj) {
     this.refs[obj.instance] = obj;
-  }
-  
+  }         
+
   //remove a reference to the instance of FrontEndExecutable
   dropref(obj) {
     console.log('dropped ref: ' + obj.instance);
     delete this.refs[obj.instance];
-  }
-  
+  }         
+
   //update the data in the storage and go over all assigned objects
   update(newdata) {
     this.cache = newdata;
@@ -380,8 +388,8 @@ class ObjectStorage {
       //console.log('Updating... ' + this.refs[ref].uid);
       this.refs[ref].update();
     });
-  }
-  
+  }         
+
   //just get the object (if not in the client -> ask for it and wait)
   get() {
     if (this.cached) return this.cache;
@@ -393,7 +401,7 @@ class ObjectStorage {
       console.log('got from the server. storing in cache...');
       promise.resolve(this.cache);
     })
-    
+
     return promise.promise;  
   }
 }
@@ -402,13 +410,13 @@ window.ObjectStorage = ObjectStorage
 
 //instance of FrontEndExecutable object
 class ExecutableObject {
-  env = {}
-  
+  env = {}          
+
   //uid (not unique) (global)
   uid = ''
   //uid (unique) (internal)
-  instance = ''
-  
+  instance = ''         
+
   dead = false
   virtual = false
 
@@ -424,7 +432,7 @@ class ExecutableObject {
   async execute() {
     console.log('executing '+this.uid+'....');
     let content;
-    
+
     if (this.virtual) console.error('execute() method is not allowed on virtual functions!');
 
     content = await this.storage.get(this.uid);
@@ -448,10 +456,10 @@ class ExecutableObject {
     this.env.method = 'destroy';
 
     if (this.virtual) console.log('virtual type was disposed'); else console.log('normal container was destoryed');
-    
+
     //unregister from the storage class
     if (!this.virtual) this.storage.dropref(this);
-    
+
     //no need of this since we can destory them unsing env.global.stack
     let content;
     if (!this.virtual) content = this.storage.get(this.uid); else content = this.virtual;
@@ -462,15 +470,15 @@ class ExecutableObject {
     interpretate(content, this.env);
 
     delete InstancesHashMap[this.instance];
-  }
-  
+  }         
+
   //update the state of it and recompute all objects inside
   //direction: BOTTOM -> TOP
   update(top) {
     //console.log('updating frontend object...'+this.uid);
     //bubble up (only by 1 level... cuz some BUG, but can still work even with this limitation)
     if (this.parent instanceof ExecutableObject && !(this.child instanceof ExecutableObject)) return this.parent.update(); 
-    
+
     if (this.virtual) {
       //console.log('-> virtual type');
       //we can detect if it was destoryed
@@ -493,23 +501,23 @@ class ExecutableObject {
 
   constructor(uid, env, virtual = false) {
     console.log('constructing the instance of '+uid+'...');
-    
+
     this.uid = uid;
     this.env = {...env};
-    
+
     this.instance = Date.now() + Math.floor(Math.random() * 100);
-    
+
     this.env.element = this.env.element || 'body';
     //global scope
     //making a stack-call only for executable objects
     this.env.global.stack = this.env.global.stack || {};
     this.env.global.stack[uid] = this;
-    
+
     this.env.root = this.env.root || {};
 
     //middleware handler (identity)
     this.local.middleware = (a) => a;
-    
+
     //for virtual functions
     if (virtual) {
       console.log('virtual object detected!');
@@ -520,19 +528,19 @@ class ExecutableObject {
       if (uid in ObjectHashMap) this.storage = ObjectHashMap[uid]; else this.storage = new ObjectStorage(uid);
       this.storage.assign(this);
     }
-    
+
     if (this.env.root instanceof ExecutableObject) {
       //connecting together
       console.log('connection between two: '+this.env.root.uid + ' and a link to '+this.uid);
       this.parent = this.env.root;
       this.env.root.child = this;
     }
-    
+
     this.env.root = this;
 
     InstancesHashMap[this.instance] = this;
     return this;
-  }  
+  }           
 };
 
 window.ExecutableObject = ExecutableObject
@@ -575,7 +583,7 @@ var setInnerHTML = function(elm, html) {
       .forEach( attr => newScript.setAttribute(attr.name, attr.value) );
     newScript.appendChild(document.createTextNode(oldScript.innerHTML));
     oldScript.parentNode.replaceChild(newScript, oldScript);
-  });
+  });         
 };
 
 window.setInnerHTML = setInnerHTML
@@ -601,14 +609,14 @@ function throttle(cb, delay = 300) {
         waitingArgs = null
         setTimeout(timeoutFunc, delay)
       }
-    }
-  
+    }         
+
     return (...args) => {
       if (shouldWait) {
         waitingArgs = args
         return
-      }
-  
+      }         
+
       cb(...args)
       shouldWait = true
       setTimeout(timeoutFunc, delay)

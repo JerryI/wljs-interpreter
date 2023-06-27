@@ -176,11 +176,11 @@ core.FrontEndExecutable = async (args, env) => {
 
 
 
-    core[key1].instances.forEach((inst) => {
+    Object.values(core[key1].instances).forEach((inst) => {
       inst.update();
     });
 
-    core[key2].instances.forEach((inst) => {
+    Object.values(core[key2].instances).forEach((inst) => {
       inst.update();
     });    
   }  
