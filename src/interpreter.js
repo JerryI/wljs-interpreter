@@ -318,7 +318,7 @@ let server = {
   },
 
   addTracker(name) {
-    this.talkKernel('Experimental`ValueFunction['+name+'] = Function[{y,x}, FrontSubmit[FrontUpdateSymbol["'+name+'", x]]]')
+    this.socket.send('NotebookAddTracking['+name+']')
   }
 }
 
