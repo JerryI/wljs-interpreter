@@ -162,7 +162,6 @@ interpretate.anonymous = async (d, org) => {
 
   const data = await server.askKernel(name); //get the data
   console.log('got the data. will be cached...');
-  console.error(JSON.stringify(data));
 
   let symbolQ = typeof data === 'string';
 
@@ -318,6 +317,7 @@ let server = {
   },
 
   addTracker(name) {
+    console.warn('added tracker for '+name);
     this.socket.send('NotebookAddTracking['+name+']')
   }
 }
