@@ -149,6 +149,7 @@ interpretate.contextExpand = (context) => {
 
 interpretate.anonymous = async (d, org) => {
   //TODO Check if it set delayed or set... if set, then one need only to cache it
+  console.warn('Anonimous symbol');
   if (!server.socket) {
     console.error('Symbol '+name+' is undefined in any contextes available. Communication with Wolfram Kernel is not possible for now.');
   }  
@@ -241,7 +242,13 @@ interpretate.toJSON = (d) => {
 //Server API
 let server = {
   promises : {},
-  socket: false,          
+  socket: false,   
+  
+  kernel: {
+    socket: {
+      send: () => {console.error('not connection to kernel');}
+    }
+  },
 
   init(socket) {
     this.socket = socket;
@@ -280,7 +287,7 @@ let server = {
   },
   //fire event on the secondary kernel (your working area) (no reply)
   emitt(uid, data) {
-    this.socket.send('NotebookEmitt[EmittedEvent["'+uid+'", '+data+']]');
+    this.kernel.socket.send('EmittedEvent["'+uid+'", '+data+']');
   },
 
   post: {
@@ -309,7 +316,7 @@ let server = {
 
   //evaluate something on the secondary kernel (your working area) (no reply)
   talkKernel(expr) {
-    this.socket.send('NotebookEmitt['+expr+']');
+    this.kernel.socket.send('NotebookEmitt['+expr+']');
   },
 
   clearObject(uid) {
@@ -318,7 +325,7 @@ let server = {
 
   addTracker(name) {
     console.warn('added tracker for '+name);
-    this.socket.send('NotebookAddTracking['+name+']')
+    this.kernel.socket.send('NotebookAddTracking['+name+']')
   }
 }
 
