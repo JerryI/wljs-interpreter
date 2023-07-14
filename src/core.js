@@ -159,6 +159,12 @@ core.FrontEndExecutable = async (args, env) => {
     ObjectHashMap[key2].update(clone);
   }
 
+  core.NoVirtual = async (args, env) => {
+    return await interpretate(args, {...env, novirtual: true})
+  }
+
+  core.NoVirtual.destroy = core.NoVirtual
+
   core.FlipSymbols = async function (args, env) {
     const key1 = args[0];
     const key2 = args[1];

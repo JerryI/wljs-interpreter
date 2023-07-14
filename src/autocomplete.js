@@ -10,6 +10,11 @@ window.EditorAutocomplete.extend([
         "info":"FHold[expr] hold expressing to evaluate purely on the frontend"
     },  
     {
+        "label": "NoVirtual",
+        "type": "keyword",
+        "info": "Blocks dynamics and virtual containers"
+    },
+    {
         "label":"FrontEndOnly",
         "type":"keyword",
         "info":"a synonim to FHold"
