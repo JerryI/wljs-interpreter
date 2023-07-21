@@ -312,6 +312,12 @@ let server = {
       const p = new Deferred();
       WSPHttpBigQuery('NotebookEmitt[EmittedEvent["'+uid+'", '+data+'], "'+window.Notebook+'"]', p);
       return p.promise;
+    },
+
+    send(data) {
+      const p = new Deferred();
+      WSPHttpBigQuery(data, p);
+      return p.promise;      
     }
   },
 
