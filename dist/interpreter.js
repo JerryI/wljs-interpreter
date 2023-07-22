@@ -147,11 +147,12 @@ interpretate.contextExpand = (context) => {
   interpretate.contextes.push(context);
 }
 
+//packed symbols (for the case when Kernel is temporary unavailable)
+interpretate.packedSymbols = {}
+
 interpretate.anonymous = async (d, org) => {
   //TODO Check if it set delayed or set... if set, then one need only to cache it
-  if (!server.socket) {
-    console.error('Symbol '+name+' is undefined in any contextes available. Communication with Wolfram Kernel is not possible for now.');
-  }  
+  console.warn('Anonimous symbol');  
 
   let name;
   if (d instanceof Array) {
@@ -160,9 +161,30 @@ interpretate.anonymous = async (d, org) => {
     name = d;   //symbol
   }
 
-  const data = await server.askKernel(name); //get the data
-  console.log('got the data. will be cached...');
+  let data;
+  let packed = false;
 
+  if (!server.socket) {
+    if (!(name in interpretate.packedSymbols)) {
+      console.error('Symbol '+name+' is undefined in any contextes available. Communication with Wolfram Kernel is not possible for now.');
+    } else {
+      data = interpretate.packedSymbols[name];
+      console.warn('packed Symbol: '+name);
+      packed = true;
+    }
+  } else {
+    if (name in interpretate.packedSymbols) {
+      data = interpretate.packedSymbols[name];
+      console.warn('packed Symbol: '+name);
+      packed = true;
+    } else {
+      console.warn('sending request to a server... for'+name);
+      data = await server.getSymbol(name); //get the data
+      console.log('got');
+      console.log(data);
+    }
+  }
+  
   let symbolQ = typeof data === 'string';
 
   if (symbolQ) {
@@ -171,8 +193,16 @@ interpretate.anonymous = async (d, org) => {
   }
 
   if ((symbolQ && !(data in core)) || typeof data == 'undefined') {
-    throw('Symbol '+data+' is not defined');  
-    return;
+    console.log('checking... '+name);
+    console.log('gained data..'+data);
+    if (!(name in interpretate.packedSymbols)) {
+      throw('Symbol '+data+' is not defined in any contextes and packing'); 
+      return;
+    } else {
+      packed = true;
+      console.warn('packed Symbol: '+name);
+      data = interpretate.packedSymbols[name];
+    } 
   }
 
   core[name] = async (args, env) => {
@@ -203,7 +233,8 @@ interpretate.anonymous = async (d, org) => {
 
   core[name].data = data; //get the data
 
-  server.addTracker(name);
+  if (!packed) server.addTracker(name);
+  server.trackedSymbols[name] = true;
 
   core[name].virtual = true;
   core[name].instances = {};
@@ -241,30 +272,21 @@ interpretate.toJSON = (d) => {
 //Server API
 let server = {
   promises : {},
-  socket: false,          
+  socket: false,   
+
+  trackedSymbols: {},
+  
+  kernel: {
+    socket: {
+      send: () => {
+        socket.send('NotebookPopupFire["error", "No connection to the working kernel. Please create a link first!"]');
+        throw 'No connection to the working kernel. Please create a link first!';
+      }
+    }
+  },
 
   init(socket) {
     this.socket = socket;
-
-    window.onerror = function (message, file, line, col, error) {
-      socket.send('NotebookPopupFire["error", "'+error.message+'"]');
-      console.log(error);
-      return false;
-    };
-    window.addEventListener("error", function (e) {
-      socket.send('NotebookPopupFire["error", "'+e.message+'"]');
-      console.log(e);
-      return false;
-    });
-    window.addEventListener('unhandledrejection', function (e) {
-      socket.send('NotebookPopupFire["error", "'+e.message+'"]');
-      console.log(e);
-    });
-
-    console.error = function(e) {
-      socket.send('NotebookPopupFire["error", "'+e+'"]');
-      console.log(e);
-    };
   },
 
   //evaluate something on the master kernel and make a promise for the reply
@@ -280,7 +302,7 @@ let server = {
   },
   //fire event on the secondary kernel (your working area) (no reply)
   emitt(uid, data) {
-    this.socket.send('NotebookEmitt[EmittedEvent["'+uid+'", '+data+']]');
+    this.kernel.socket.send('EmittedEvent["'+uid+'", '+data+']');
   },
 
   post: {
@@ -290,6 +312,12 @@ let server = {
       const p = new Deferred();
       WSPHttpBigQuery('NotebookEmitt[EmittedEvent["'+uid+'", '+data+'], "'+window.Notebook+'"]', p);
       return p.promise;
+    },
+
+    send(data) {
+      const p = new Deferred();
+      WSPHttpBigQuery(data, p);
+      return p.promise;      
     }
   },
 
@@ -307,9 +335,22 @@ let server = {
     return promise.promise    
   },
 
+  getSymbol(expr) {
+    const uid = Date.now() + Math.floor(Math.random() * 100);
+
+    const promise = new Deferred();
+    this.promises[uid] = promise;
+    //not implemented
+    //console.error('askKernel is not implemented');
+    //console.log('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
+    this.socket.send('NotebookGetSymbol["'+uid+'", ""][Hold['+expr+']]');
+
+    return promise.promise     
+  },
+
   //evaluate something on the secondary kernel (your working area) (no reply)
   talkKernel(expr) {
-    this.socket.send('NotebookEmitt['+expr+']');
+    this.kernel.socket.send('NotebookEmitt['+expr+']');
   },
 
   clearObject(uid) {
@@ -318,11 +359,9 @@ let server = {
 
   addTracker(name) {
     console.warn('added tracker for '+name);
-    this.socket.send('NotebookAddTracking['+name+']')
+    this.kernel.socket.send('NotebookAddTracking['+name+']')
   }
 }
-
-
 
 
 var ObjectHashMap = {}
