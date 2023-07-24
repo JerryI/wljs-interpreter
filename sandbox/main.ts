@@ -358,9 +358,11 @@ function openExample(e:string) {
   const f = fetch(e).then((resp)=>{
     resp.text().then((r)=>{
       console.log(r);
+      console.log(JSONCrush);    
+
       const data = JSON.parse(JSONCrush.uncrush(decodeURIComponent(r)));
       console.log(data);
-      loadExample(data);
+      loadExample(data); 
     });
   });  
 }
