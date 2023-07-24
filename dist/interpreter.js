@@ -149,6 +149,22 @@ interpretate.contextExpand = (context) => {
 
 //packed symbols (for the case when Kernel is temporary unavailable)
 interpretate.packedSymbols = {}
+interpretate.usedPackedSymbols = {}
+
+interpretate.garbageCollect = () => {
+  //collected unused packedSymbols
+  console.log('collect garbage!');
+  Object.keys(interpretate.packedSymbols).forEach((s)=>{
+    if (!(s in interpretate.usedPackedSymbols)) {
+      //collect!
+      console.warn('Symbol '+s+' was not used for a long time...');
+      server.send('NotebookDisposeSymbol["'+s+'"]');
+    } else {
+      console.warn('Symbol '+s+' wont be disposed. 200');
+    }
+  });
+
+}
 
 interpretate.anonymous = async (d, org) => {
   //TODO Check if it set delayed or set... if set, then one need only to cache it
@@ -169,12 +185,14 @@ interpretate.anonymous = async (d, org) => {
       console.error('Symbol '+name+' is undefined in any contextes available. Communication with Wolfram Kernel is not possible for now.');
     } else {
       data = interpretate.packedSymbols[name];
+      interpretate.usedPackedSymbols[name] = true;
       console.warn('packed Symbol: '+name);
       packed = true;
     }
   } else {
     if (name in interpretate.packedSymbols) {
       data = interpretate.packedSymbols[name];
+      interpretate.usedPackedSymbols[name] = true;
       console.warn('packed Symbol: '+name);
       packed = true;
     } else {
@@ -202,6 +220,7 @@ interpretate.anonymous = async (d, org) => {
       packed = true;
       console.warn('packed Symbol: '+name);
       data = interpretate.packedSymbols[name];
+      interpretate.usedPackedSymbols[name] = true;
     } 
   }
 
@@ -303,6 +322,10 @@ let server = {
   //fire event on the secondary kernel (your working area) (no reply)
   emitt(uid, data) {
     this.kernel.socket.send('EmittedEvent["'+uid+'", '+data+']');
+  },
+
+  send(expr) {
+    this.socket.send(expr);
   },
 
   post: {

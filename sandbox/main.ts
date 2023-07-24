@@ -66,11 +66,6 @@ const examples = [
     url: './meta.txt' 
   },  
   {
-    title: 'Low-level dynamic',
-    desc: 'An example of using frontend objects (internal data structure)',
-    url: './foexample.txt' 
-  },
-  {
     title: 'JS - Wolfram communication',
     desc: 'A simple demo with JS function called from WL',
     url: './jssimple.txt' 
