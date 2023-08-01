@@ -57,7 +57,7 @@ __To help maintain this project [kirill.vasin@uni-a.de](https://www.paypal.com/d
 
 ## License
 
-Project is released under the GNU General Public License (GPL).
+Project is released under the GNU General Public License V3 (GPL).
 
 # JavaScript Sandbox
 
