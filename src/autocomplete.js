@@ -22,7 +22,7 @@ window.EditorAutocomplete.extend([
     {
         "label":"FrontSubmit",
         "type":"keyword",
-        "info":"Evaluate any expression using frontend (no reply)"
+        "info":'Evaluate any expression using frontend (no reply). Or FrontSubmit[expr_, MetaMarker[""]] evaluates inside a specific marked container'
     }, 
     {
         "label":"CreateFrontEndObject",
@@ -120,6 +120,7 @@ window.EditorAutocomplete.extend([
         "type": "keyword",
         "info": "[Frontend Only] AttachDOM[DOMid] attach the DOM id to the context"          
     }
+    
 
 ])
 
