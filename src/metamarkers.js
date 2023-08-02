@@ -74,7 +74,7 @@ core.FrontSubmit = async (args, env) => {
 
   if (uid in MetaMarkers) {
     console.log('found one! ');
-    const arr =  Object.values(MetaMarkers[marker]);
+    const arr =  Object.values(MetaMarkers[uid]);
     
     for (instance of arr) {
       //execute inside the container
@@ -92,6 +92,8 @@ core.FrontSubmit = async (args, env) => {
 
   return results;
 }
+
+core.FrontSubmitAlias = core.FrontSubmit
 
 core.First = async (args, env) => {
   const dt = await interpretate(args[0], env);
