@@ -76,7 +76,7 @@ core.FrontSubmit = async (args, env) => {
     console.log('found one! ');
     const arr =  Object.values(MetaMarkers[uid]);
     
-    for (instance of arr) {
+    for (const instance of arr) {
       //execute inside the container
       console.log('try!');
       //console.log(instanceEnv);

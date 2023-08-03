@@ -2,6 +2,11 @@
 var MetaMarkers = {};
 
 core.MetaMarker = async (args, env) => {
+  if (env.hold) {
+    console.log('Held meta-marker expression!');
+    return ["MetaMarker", ...args];
+  }
+
   const marker = await interpretate(args[0], env);
   const inst = env.root.instance;
 
@@ -46,8 +51,49 @@ core.FindMetaMarker = async (args, env) => {
     return list;
   }
 
-  return [];
+  return null;
 }
+
+core.FrontSubmit = async (args, env) => {
+  if (args.length < 2) {
+    console.log('FrontSubmit cannot be evaluated on the frontend with only 1 argument!');
+    throw 'FrontSubmit cannot be evaluated on the frontend with only 1 argument!';
+  }
+
+  const expr = args[0];
+
+  //CORRENTLY SUPPORTS ONLY METAMARKER OBJECTS
+  const marker = await interpretate(args[1], {...env, hold:true});
+
+  if (marker[0] !== 'MetaMarker') {
+    throw 'FrontSubmit cannot be evaluated on the frontend with only MetaMarker as a second argument';
+  }
+
+  const uid = await interpretate(marker[1], env);
+  const results = [];
+
+  if (uid in MetaMarkers) {
+    console.log('found one! ');
+    const arr =  Object.values(MetaMarkers[uid]);
+    
+    for (const instance of arr) {
+      //execute inside the container
+      console.log('try!');
+      //console.log(instanceEnv);
+      const copy = {...instance};
+
+      //merge the scope
+      copy.scope = {...copy.scope, ...env.scope};
+
+      const result = await interpretate(expr, copy);
+      results.push(result);
+    }
+  }  
+
+  return results;
+}
+
+core.FrontSubmitAlias = core.FrontSubmit
 
 core.First = async (args, env) => {
   const dt = await interpretate(args[0], env);
@@ -57,6 +103,8 @@ core.First = async (args, env) => {
 //to execute code inside the container (injecting)
 core.Placed = async (args, env) => {
   //console.log(args[1]);
+  console.warn('Method Placed is depricated!');
+
   let evaluated = await interpretate(args[1], env);
 
   if (core._typeof(evaluated) != 'MetaMarkers') {

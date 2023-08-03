@@ -8,7 +8,7 @@ import type { ErrorMessageType, StateType, TranspiledCodeType } from './types'
 import { text } from 'stream/consumers'
 
 import JSONCrush from 'jsoncrush'
-
+ 
 let state: StateType = 'editing'
 let errorMessage: ErrorMessageType = ''
   
