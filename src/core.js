@@ -494,15 +494,17 @@ await interpretate(expr, env);
 }
 
 core.While = async (args, env) => {
-//sequential execution
-const condition = await interpretate(args[0], env);
-//console.log('condition: ' + condition);
-if (condition) {
+  //sequential execution
 
-//creating virtual objects is fobidden in cycles
-await interpretate(args[1], {...env, novirtual: true});
-await interpretate(['While', ...args], env);
-}
+  //creating virtual objects in conditions are fobidden
+  const condition = await interpretate(args[0], {...env, novirtual: true});
+  //console.log('condition: ' + condition);
+  if (condition) {
+
+    //creating virtual objects is fobidden in cycles
+    await interpretate(args[1], {...env, novirtual: true});
+    await interpretate(['While', ...args], env);
+  }
 } 
 
 core.If = async (args, env) => {
