@@ -660,7 +660,7 @@ function openawindow(url, target='_self') {
 window.openawindow = openawindow
 
 // Throttle function: Input as function which needs to be throttled and delay is the time interval in milliseconds
-function throttle(cb, delay = 1) {
+function throttle(cb, delay = 30) {
     let shouldWait = false
     let waitingArgs
     const timeoutFunc = () => {
