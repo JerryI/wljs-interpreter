@@ -601,6 +601,15 @@ class ExecutableObject {
     this.env.root = this;
 
     InstancesHashMap[this.instance] = this;
+
+    //global hook-functions
+    if (this.env.global.hooks) {
+      const obj = this;
+      this.env.global.hooks.forEach((hook) => {
+        hook(obj)
+      });
+    }
+
     return this;
   }           
 };

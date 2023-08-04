@@ -93,6 +93,71 @@ core.FrontSubmit = async (args, env) => {
   return results;
 }
 
+const contrainersBox = {};
+
+core.DeleteExecutablesBox = async (args, env) => {
+  let containersBoxIDs =  await interpretate(args[0], env);
+  if (!containersBoxIDs.length) containersBoxIDs = [containersBoxIDs];
+
+  containersBoxIDs.forEach((e) => {
+    console.log("disposing object...");
+    e.dispose();
+  })
+  //somehow remove them
+}
+
+//a much more complicated version, where you are using object to return
+core.FrontSubmitExtended = async (args, env) => {
+  if (args.length < 3) {
+    console.log('FrontSubmitExtended cannot be evaluated on the frontend with only 2 argument!');
+    throw 'FrontSubmitExtended cannot be evaluated on the frontend with only 2 argument!';
+  }
+
+  const expr = args[0];
+
+  //where this thing will be placed
+  //to omitt communication between WLJS and WL
+  const containersBoxID =  await interpretate(args[2], env);
+
+  const Box = [];
+
+  //CORRENTLY SUPPORTS ONLY METAMARKER OBJECTS
+  const marker = await interpretate(args[1], {...env, hold:true});
+
+  if (marker[0] !== 'MetaMarker') {
+    throw 'FrontSubmit cannot be evaluated on the frontend with only MetaMarker as a second argument';
+  }
+
+  const uid = await interpretate(marker[1], env);
+  const results = [];
+
+  if (uid in MetaMarkers) {
+    console.log('found one! ');
+    const arr =  Object.values(MetaMarkers[uid]);
+    
+    for (const instance of arr) {
+      //execute inside the container
+      console.log('try!');
+      //console.log(instanceEnv);
+      const copy = {...instance};
+
+      //merge the scope
+      copy.scope = {...copy.scope, ...env.scope};
+      if (!copy.global.hooks) copy.global.hooks = [];
+      copy.global.hooks.push((obj)=>{
+        Box.push(obj);
+      });
+
+      const result = await interpretate(expr, copy);
+
+      results.push(result);
+    }
+  }  
+
+  contrainersBox[containersBoxID] = Box;
+  return results;
+}
+
 core.FrontSubmitAlias = core.FrontSubmit
 
 core.First = async (args, env) => {
