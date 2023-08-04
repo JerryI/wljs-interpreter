@@ -6,7 +6,8 @@
     "js": [
       "src/interpreter.js",
       "src/core.js",
-      "src/metamarkers.js"
+      "src/metamarkers.js",
+      "src/settings.js"
     ],
     "autocomplete": "src/autocomplete.js"
   },
