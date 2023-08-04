@@ -215,7 +215,11 @@ core.FrontEndExecutable = async (args, env) => {
 
   core.FHold = core.FrontEndOnly;
   //AHHAHAHAH
-  core.Hold = core.FrontEndOnly;          
+  core.Hold = core.FrontEndOnly;  
+  
+  core.Dynamic = core.FrontEndOnly; 
+
+  core.FrontDynamic = core.FrontEndOnly; 
 
   core.Power = async (args, env) => {
     //if (!env.numerical) return ["Power", ...args];
