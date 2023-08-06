@@ -17,6 +17,8 @@ function isNumeric(value) {
   return /^-?\d+$/.test(value);
 }
 
+const WLNumber = new RegExp(/^(-?\d+)(.?\d*)(\*\^)?(\d*)/);
+
 window.Deferred = Deferred;
 window.aflatten = aflatten;
 
@@ -37,6 +39,24 @@ var interpretate = (d, env = {}) => {
   if (stringQ) {
     if (d.charAt(0) == "'") return d.slice(1, -1);
     if (isNumeric(d)) return parseInt(d); //for Integers
+  
+    if (WLNumber.test(d)) {
+      console.log(d);
+      //deconstruct the string
+      let [begin, floatString, digits, man, power] = d.split(WLNumber);
+    
+      if (digits === '.')
+        floatString += digits + '0';
+      else
+        floatString += digits;
+    
+      if (man)
+        floatString += 'E' + power;
+
+      console.log(floatString);
+    
+      return parseFloat(floatString);
+    }
 
     //in safe mode just convert unknown symbols into a string
     //if (!env.unsafe) return d;

@@ -260,12 +260,12 @@ return x + y;
 
 core.Plus.update = core.Plus;
 
-core.Rational = function (args, env) {
-if (env.numerical === true) return interpretate(args[0], env)/interpretate(args[1], env);
-
-//return the original form igoring other arguments
-return ["Rational", args[0], args[1]];
+core.Rational = async function (args, env) {
+  return (await interpretate(args[0], env)) / (await interpretate(args[1], env));
 }
+
+core.Rational.update = core.Rational
+core.Rational.destroy = core.Rational
 
 function multiplyNestedArrayByScalar(arr, scalar) {
 if (Array.isArray(arr)) {
