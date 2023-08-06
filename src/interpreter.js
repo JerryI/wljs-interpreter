@@ -192,6 +192,8 @@ interpretate.anonymous = async (d, org) => {
 
   let name;
   if (d instanceof Array) {
+    console.error('stack call: ');
+    console.warn(org.global.stack);
     throw('subvalues are not supported for '+d[0]);
   } else {
     name = d;   //symbol
