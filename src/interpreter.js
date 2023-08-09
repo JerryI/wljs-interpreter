@@ -310,10 +310,21 @@ interpretate.toJSON = (d) => {
 
 }
 
+const fakeSocket = () => {
+  return false;
+}
+
+fakeSocket.q = []
+
+fakeSocket.send = (expr) => {
+  console.warn('No connection to a kernel... keeping in a pocket');
+  fakeSocket.q.push(expr)
+}
+
 //Server API
 let server = {
   promises : {},
-  socket: false,   
+  socket: fakeSocket,   
 
   trackedSymbols: {},
   
@@ -327,6 +338,12 @@ let server = {
   },
 
   init(socket) {
+    if (this.socket.q) {
+      console.warn('Sending all quered messages');
+      this.socket.forEach((message)=>{
+        socket.send(message);
+      })
+    }
     this.socket = socket;
   },
 

@@ -106,7 +106,7 @@ core.FrontEndExecutable = async (args, env) => {
 
   core.PromiseResolve = (args, env) => {
     const uid = interpretate(args[0], env);
-    console.log('promise resolved!');
+    console.log('promise resolved! : '+uid);
     server.promises[uid].resolve(args[1]);
     delete server.promises[uid];
   }         
