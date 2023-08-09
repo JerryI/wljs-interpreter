@@ -340,7 +340,7 @@ let server = {
   init(socket) {
     if (this.socket.q) {
       console.warn('Sending all quered messages');
-      this.socket.forEach((message)=>{
+      this.socket.q.forEach((message)=>{
         socket.send(message);
       })
     }
