@@ -106,7 +106,7 @@ core.FrontEndExecutable = async (args, env) => {
 
   core.PromiseResolve = (args, env) => {
     const uid = interpretate(args[0], env);
-    console.log('promise resolved!');
+    console.log('promise resolved! : '+uid);
     server.promises[uid].resolve(args[1]);
     delete server.promises[uid];
   }         
@@ -215,7 +215,13 @@ core.FrontEndExecutable = async (args, env) => {
 
   core.FHold = core.FrontEndOnly;
   //AHHAHAHAH
-  core.Hold = core.FrontEndOnly;          
+  core.Hold = core.FrontEndOnly;  
+  
+  core.Dynamic = core.FrontEndOnly; 
+
+  core.Offload = core.FrontEndOnly; 
+
+  core.FrontDynamic = core.FrontEndOnly; 
 
   core.Power = async (args, env) => {
     //if (!env.numerical) return ["Power", ...args];
@@ -256,12 +262,12 @@ return x + y;
 
 core.Plus.update = core.Plus;
 
-core.Rational = function (args, env) {
-if (env.numerical === true) return interpretate(args[0], env)/interpretate(args[1], env);
-
-//return the original form igoring other arguments
-return ["Rational", args[0], args[1]];
+core.Rational = async function (args, env) {
+  return (await interpretate(args[0], env)) / (await interpretate(args[1], env));
 }
+
+core.Rational.update = core.Rational
+core.Rational.destroy = core.Rational
 
 function multiplyNestedArrayByScalar(arr, scalar) {
 if (Array.isArray(arr)) {
@@ -494,15 +500,17 @@ await interpretate(expr, env);
 }
 
 core.While = async (args, env) => {
-//sequential execution
-const condition = await interpretate(args[0], env);
-//console.log('condition: ' + condition);
-if (condition) {
+  //sequential execution
 
-//creating virtual objects is fobidden in cycles
-await interpretate(args[1], {...env, novirtual: true});
-await interpretate(['While', ...args], env);
-}
+  //creating virtual objects in conditions are fobidden
+  const condition = await interpretate(args[0], {...env, novirtual: true});
+  //console.log('condition: ' + condition);
+  if (condition) {
+
+    //creating virtual objects is fobidden in cycles
+    await interpretate(args[1], {...env, novirtual: true});
+    await interpretate(['While', ...args], env);
+  }
 } 
 
 core.If = async (args, env) => {

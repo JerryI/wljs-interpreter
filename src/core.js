@@ -219,6 +219,8 @@ core.FrontEndExecutable = async (args, env) => {
   
   core.Dynamic = core.FrontEndOnly; 
 
+  core.Offload = core.FrontEndOnly; 
+
   core.FrontDynamic = core.FrontEndOnly; 
 
   core.Power = async (args, env) => {

@@ -20,6 +20,11 @@ window.EditorAutocomplete.extend([
         "info":"a synonim to FHold"
     },    
     {
+        "label":"Offload",
+        "type":"keyword",
+        "info":"Holds an expression to evaluate purely on the frontend"
+    },       
+    {
         "label":"FrontSubmit",
         "type":"keyword",
         "info":'Evaluate any expression using frontend (no reply). Or FrontSubmit[expr_, MetaMarker[""]] evaluates inside a specific marked container'

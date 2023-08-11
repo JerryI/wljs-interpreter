@@ -17,6 +17,8 @@ function isNumeric(value) {
   return /^-?\d+$/.test(value);
 }
 
+const WLNumber = new RegExp(/^(-?\d+)(.?\d*)(\*\^)?(\d*)/);
+
 window.Deferred = Deferred;
 window.aflatten = aflatten;
 
@@ -37,6 +39,24 @@ var interpretate = (d, env = {}) => {
   if (stringQ) {
     if (d.charAt(0) == "'") return d.slice(1, -1);
     if (isNumeric(d)) return parseInt(d); //for Integers
+  
+    if (WLNumber.test(d)) {
+      console.log(d);
+      //deconstruct the string
+      let [begin, floatString, digits, man, power] = d.split(WLNumber);
+    
+      if (digits === '.')
+        floatString += digits + '0';
+      else
+        floatString += digits;
+    
+      if (man)
+        floatString += 'E' + power;
+
+      console.log(floatString);
+    
+      return parseFloat(floatString);
+    }
 
     //in safe mode just convert unknown symbols into a string
     //if (!env.unsafe) return d;
@@ -172,6 +192,8 @@ interpretate.anonymous = async (d, org) => {
 
   let name;
   if (d instanceof Array) {
+    console.error('stack call: ');
+    console.warn(org.global.stack);
     throw('subvalues are not supported for '+d[0]);
   } else {
     name = d;   //symbol
@@ -288,10 +310,21 @@ interpretate.toJSON = (d) => {
 
 }
 
+const fakeSocket = () => {
+  return false;
+}
+
+fakeSocket.q = []
+
+fakeSocket.send = (expr) => {
+  console.warn('No connection to a kernel... keeping in a pocket');
+  fakeSocket.q.push(expr)
+}
+
 //Server API
 let server = {
   promises : {},
-  socket: false,   
+  socket: fakeSocket,   
 
   trackedSymbols: {},
   
@@ -305,6 +338,12 @@ let server = {
   },
 
   init(socket) {
+    if (this.socket.q) {
+      console.warn('Sending all quered messages');
+      this.socket.q.forEach((message)=>{
+        socket.send(message);
+      })
+    }
     this.socket = socket;
   },
 
@@ -601,6 +640,15 @@ class ExecutableObject {
     this.env.root = this;
 
     InstancesHashMap[this.instance] = this;
+
+    //global hook-functions
+    if (this.env.global.hooks) {
+      const obj = this;
+      this.env.global.hooks.forEach((hook) => {
+        hook(obj)
+      });
+    }
+
     return this;
   }           
 };
@@ -660,7 +708,7 @@ function openawindow(url, target='_self') {
 window.openawindow = openawindow
 
 // Throttle function: Input as function which needs to be throttled and delay is the time interval in milliseconds
-function throttle(cb, delay = 1) {
+function throttle(cb, delay = 30) {
     let shouldWait = false
     let waitingArgs
     const timeoutFunc = () => {

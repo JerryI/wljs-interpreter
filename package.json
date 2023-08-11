@@ -1,6 +1,6 @@
 {
   "name": "wljs-interpreter",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "A core library and WL interpreter written in pure JS",
   "wljs-meta": {
     "js": [
