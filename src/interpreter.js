@@ -324,7 +324,11 @@ fakeSocket.send = (expr) => {
 //Server API
 let server = {
   promises : {},
-  socket: fakeSocket,   
+  socket: fakeSocket,  
+  
+  kernelControl: {
+    
+  },
 
   trackedSymbols: {},
   
