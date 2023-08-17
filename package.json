@@ -9,7 +9,8 @@
       "src/metamarkers.js",
       "src/settings.js"
     ],
-    "autocomplete": "src/autocomplete.js"
+    "autocomplete": "src/autocomplete.js",
+    "important": true
   },
   "repository": {
     "type": "git",
