@@ -353,7 +353,7 @@ let server = {
 
   //evaluate something on the master kernel and make a promise for the reply
   ask(expr) {
-    const uid = Date.now() + Math.floor(Math.random() * 100);
+    const uid = uuidv4();
 
     const promise = new Deferred();
     this.promises[uid] = promise;
@@ -389,7 +389,7 @@ let server = {
 
   //evaluate something on the secondary kernel (your working area) and make a promise for the reply
   askKernel(expr) {
-    const uid = Date.now() + Math.floor(Math.random() * 100);
+    const uid = uuidv4();
 
     const promise = new Deferred();
     this.promises[uid] = promise;
@@ -402,7 +402,7 @@ let server = {
   },
 
   getSymbol(expr) {
-    const uid = Date.now() + Math.floor(Math.random() * 100);
+    const uid = uuidv4();
 
     const promise = new Deferred();
     this.promises[uid] = promise;
@@ -610,7 +610,7 @@ class ExecutableObject {
     this.uid = uid;
     this.env = {...env};
 
-    this.instance = Date.now() + Math.floor(Math.random() * 100);
+    this.instance = uuidv4();
 
     this.env.element = this.env.element || 'body';
     //global scope
@@ -670,7 +670,7 @@ class jsRule {
 
 
 
-function uuidv4() {
+function uuidv4() { 
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
