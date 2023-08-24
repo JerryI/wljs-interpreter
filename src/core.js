@@ -193,7 +193,11 @@ core.FrontEndExecutable = async (args, env) => {
 
   core.Unsafe = async function (args, env) {
     return await interpretate(args[0], {...env, unsafe: true});
-  }         
+  }      
+  
+  core.GlobalThrottle = async function (args, env) {
+    interpretate.throttle = await interpretate(args[0], env);
+  }
 
   core.FrontEndExecutableHold = core.FrontEndExecutable;
   //to prevent codemirror 6 from drawing it
