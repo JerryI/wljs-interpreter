@@ -486,7 +486,31 @@ const y = await interpretate(args[1], env);
 return [y[2]*x[1] - y[1]*x[2], -y[2]*x[0]+y[0]*x[2], y[1]*x[0] - y[0]*x[1]];
 }
 
+core.NoUpdates = async (args, env) => {
+    return await interpretate(args[0], env);
+}
+
+core.NoUpdates.destroy = async (args, env) => {
+    return await interpretate(args[0], env);
+}
+
+core.NoUpdates.update = async (args, env) => {
+    console.log('Updates are blocked by NoUpdates expr');
+    return null;
+}
+
 core.CompoundExpression = async (args, env) => {
+//sequential execution
+let content;
+
+for (const expr of args) {
+content = await interpretate(expr, env);
+}
+
+return content;
+}
+
+core.CompoundExpression.update = async (args, env) => {
 //sequential execution
 let content;
 
