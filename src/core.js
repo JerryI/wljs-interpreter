@@ -266,6 +266,11 @@ return x + y;
 
 core.Plus.update = core.Plus;
 
+core.Plus.destroy = async (args, env) => {
+  await interpretate(args[0], env);
+  await interpretate(args[1], env);
+}
+
 core.Rational = async function (args, env) {
   return (await interpretate(args[0], env)) / (await interpretate(args[1], env));
 }
