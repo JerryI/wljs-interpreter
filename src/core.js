@@ -342,6 +342,12 @@ function getRandomArbitrary(min, max) {
 return Math.random() * (max - min) + min;
 }
 
+core.Times.destroy = async function (args, env) {
+//if (env.numerical === true) return (await interpretate(args[0], env)) * (await interpretate(args[1], env));
+    await interpretate(args[0], env);
+    await interpretate(args[1], env);
+}
+
 core.RandomReal = async (args, env) => {
 const range = await interpretate(args[0], env);
 
