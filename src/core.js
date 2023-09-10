@@ -490,6 +490,17 @@ length += data[i]*data[i];
 return (data.map((e)=>e/length));
 }
 
+core.Dot = async (args, env) => {
+const x = await interpretate(args[0], env);
+const y = await interpretate(args[1], env);
+
+let total = 0.0;
+for (let i=0; i<x.length; ++i) {
+  total += x[i]*y[i];
+}
+return total;
+}
+
 core.Cross = async (args, env) => {
 const x = await interpretate(args[0], env);
 const y = await interpretate(args[1], env);
