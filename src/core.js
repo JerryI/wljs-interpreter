@@ -165,6 +165,7 @@ core.FrontEndExecutable = async (args, env) => {
 
   core.NoVirtual.destroy = core.NoVirtual
 
+
   core.FlipSymbols = async function (args, env) {
     const key1 = args[0];
     const key2 = args[1];
@@ -520,6 +521,30 @@ core.NoUpdates.update = async (args, env) => {
     console.log('Updates are blocked by NoUpdates expr');
     return null;
 }
+
+core.Static = async (args, env) => {
+  return await interpretate(args[0], env);
+}
+
+core.Static.destroy = async (args, env) => {
+  return await interpretate(args[0], env);
+}
+
+core.Static.update = async (args, env) => {
+  console.log('Updates are not allowed inside Static');
+  return undefined;
+}
+
+core.Constant = async (args, env) => {
+  return await interpretate(args, {...env, novirtual: true})
+}
+
+core.Constant.update = async (args, env) => {
+  console.log('Updates are blocked for constants');
+  return undefined;
+}
+
+core.Constant.destroy = core.Constant  
 
 core.CompoundExpression = async (args, env) => {
 //sequential execution
