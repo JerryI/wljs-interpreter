@@ -387,6 +387,7 @@ function zen() {
   elements.sourceholder.remove();
   elements.code.remove();
   elements.output.style.height = "100%";
+  elements.output.style.background = "transparent";
   document.body.style.overflow = 'hidden';
   
   document.getElementsByClassName("button-container")[0].remove();
