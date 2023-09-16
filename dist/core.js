@@ -165,6 +165,7 @@ core.FrontEndExecutable = async (args, env) => {
 
   core.NoVirtual.destroy = core.NoVirtual
 
+
   core.FlipSymbols = async function (args, env) {
     const key1 = args[0];
     const key2 = args[1];
@@ -193,7 +194,11 @@ core.FrontEndExecutable = async (args, env) => {
 
   core.Unsafe = async function (args, env) {
     return await interpretate(args[0], {...env, unsafe: true});
-  }         
+  }      
+  
+  core.GlobalThrottle = async function (args, env) {
+    interpretate.throttle = await interpretate(args[0], env);
+  }
 
   core.FrontEndExecutableHold = core.FrontEndExecutable;
   //to prevent codemirror 6 from drawing it
@@ -261,6 +266,11 @@ return x + y;
 }  
 
 core.Plus.update = core.Plus;
+
+core.Plus.destroy = async (args, env) => {
+  await interpretate(args[0], env);
+  await interpretate(args[1], env);
+}
 
 core.Rational = async function (args, env) {
   return (await interpretate(args[0], env)) / (await interpretate(args[1], env));
@@ -331,6 +341,12 @@ core.Times.update = core.Times;
 
 function getRandomArbitrary(min, max) {
 return Math.random() * (max - min) + min;
+}
+
+core.Times.destroy = async function (args, env) {
+//if (env.numerical === true) return (await interpretate(args[0], env)) * (await interpretate(args[1], env));
+    await interpretate(args[0], env);
+    await interpretate(args[1], env);
 }
 
 core.RandomReal = async (args, env) => {
@@ -475,6 +491,17 @@ length += data[i]*data[i];
 return (data.map((e)=>e/length));
 }
 
+core.Dot = async (args, env) => {
+const x = await interpretate(args[0], env);
+const y = await interpretate(args[1], env);
+
+let total = 0.0;
+for (let i=0; i<x.length; ++i) {
+  total += x[i]*y[i];
+}
+return total;
+}
+
 core.Cross = async (args, env) => {
 const x = await interpretate(args[0], env);
 const y = await interpretate(args[1], env);
@@ -482,7 +509,55 @@ const y = await interpretate(args[1], env);
 return [y[2]*x[1] - y[1]*x[2], -y[2]*x[0]+y[0]*x[2], y[1]*x[0] - y[0]*x[1]];
 }
 
+core.NoUpdates = async (args, env) => {
+    return await interpretate(args[0], env);
+}
+
+core.NoUpdates.destroy = async (args, env) => {
+    return await interpretate(args[0], env);
+}
+
+core.NoUpdates.update = async (args, env) => {
+    console.log('Updates are blocked by NoUpdates expr');
+    return null;
+}
+
+core.Static = async (args, env) => {
+  return await interpretate(args[0], env);
+}
+
+core.Static.destroy = async (args, env) => {
+  return await interpretate(args[0], env);
+}
+
+core.Static.update = async (args, env) => {
+  console.log('Updates are not allowed inside Static');
+  return undefined;
+}
+
+core.Constant = async (args, env) => {
+  return await interpretate(args, {...env, novirtual: true})
+}
+
+core.Constant.update = async (args, env) => {
+  console.log('Updates are blocked for constants');
+  return undefined;
+}
+
+core.Constant.destroy = core.Constant  
+
 core.CompoundExpression = async (args, env) => {
+//sequential execution
+let content;
+
+for (const expr of args) {
+content = await interpretate(expr, env);
+}
+
+return content;
+}
+
+core.CompoundExpression.update = async (args, env) => {
 //sequential execution
 let content;
 

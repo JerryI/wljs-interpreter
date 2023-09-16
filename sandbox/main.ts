@@ -383,6 +383,14 @@ function toggleLogs() {
   elements.output.classList.toggle('expand');
 }
 
+function zen() {
+  elements.sourceholder.remove();
+  elements.code.remove();
+  elements.output.style.height = "100%";
+  
+  document.getElementsByClassName("button-container")[0].remove();
+}
+
 elements.logbutton.addEventListener('click', ()=> {
   toggleLogs();
 });
@@ -542,10 +550,14 @@ function checkURL() : boolean {
   console.log('checked!');
 
   if (params.full == 'true') {toggleFull();
-    override = true;
+    override = true; 
   }
   if (params.logs == 'false') {toggleLogs();
     override = true;
+  }
+
+  if (params.zen === 'true') {
+    zen();
   }
 
   if (params.example) {

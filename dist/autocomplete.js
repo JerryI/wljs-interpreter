@@ -3,12 +3,7 @@ window.EditorAutocomplete.extend([
         "label":"FrontEndRef",
         "type":"keyword",
         "info":"[Frontend Only] FrontEndRef[\"uid\"], FrontEndRef[FrontEndExecutable[\"uid\"]] is a inactive reference to the frontend object, i.e. FrontEndExecutable"
-    },
-    {
-        "label":"FHold",
-        "type":"keyword",
-        "info":"FHold[expr] hold expressing to evaluate purely on the frontend"
-    },  
+    }, 
     {
         "label": "NoVirtual",
         "type": "keyword",
@@ -98,7 +93,12 @@ window.EditorAutocomplete.extend([
         "label": "EventRemove",
         "type": "keyword",
         "info": "EventRemove[EventObject[]] removes the handler"
-    },   
+    },
+    {
+        "label": "EventClone",
+        "type": "keyword",
+        "info": "EventClone[EventObject[] | String] clones an event"
+    },        
     {
         "label": "EventListener",
         "type": "keyword",
@@ -124,7 +124,19 @@ window.EditorAutocomplete.extend([
         "label": "AttachDOM",
         "type": "keyword",
         "info": "[Frontend Only] AttachDOM[DOMid] attach the DOM id to the context"          
-    }
+    },
+
+    {
+        "label": "Static",
+        "type": "keyword",
+        "info": "[Frontend Only] Static[expr] blocks updates inside Static"          
+    },
+
+    {
+        "label": "Constant",
+        "type": "keyword",
+        "info": "[Frontend Only] Constant[expr] blocks creation of virtual instances and updates"          
+    },    
     
 
 ])
