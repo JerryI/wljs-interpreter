@@ -160,11 +160,7 @@ pre, xmp {
     overflow: scroll;
   }
 
-  .code, .result {
-    height: 50vh;
-  }
-
-  .editor {
+  .code, .editor {
     resize: none;
   }
 

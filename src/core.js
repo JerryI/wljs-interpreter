@@ -422,27 +422,26 @@ console.error('Event listener for general cases is not supported! Please, use it
 }
 
 core.List = async function (args, env) {
-let copy, e, i, len, list;
-list = [];
+  let copy, e, i, len, list;
+  list = [];
 
-if (env.hold === true) {
-//console.log('holding...');
-for (i = 0, len = args.length; i < len; i++) {
-e = args[i];
+  if (env.hold === true) {
+  //console.log('holding...');
+    for (i = 0, len = args.length; i < len; i++) {
+      e = args[i];
+      list.push(e);
+    }
+    return list;
+  }
 
-list.push(e);
-}
-return list;
-}
+  copy = Object.assign({}, env);
+  for (i = 0, len = args.length; i < len; i++) {
+    e = args[i];
 
-copy = Object.assign({}, env);
-for (i = 0, len = args.length; i < len; i++) {
-e = args[i];
+    list.push(await interpretate(e, copy));
+  }
 
-list.push(await interpretate(e, copy));
-}
-
-return list;
+  return list;
 };
 
 core.List.destroy = (args, env) => {
@@ -775,10 +774,12 @@ return iterate(listOfRanges[level], m, level);
 }
 
 const table = await iterate(listOfRanges[0], m, 0);
+//console.log('table');
+//console.log(table);
 
 if (env.hold) {
 //env.hold = false;
-return ["JSObject", table]; 
+//return ["JSObject", table]; 
 }
 return table;
 
@@ -797,7 +798,7 @@ return args[0];
 }
 
 core.Set = async (args, env) => {
-const data = await interpretate(args[1], {...env, novirtual: true});
+const data = await interpretate(args[1], {...env, novirtual: true, method: undefined});
 const name = args[0];
 
 //console.log(name);
@@ -819,13 +820,13 @@ console.log("create");
 core[name] = async (args, env) => {
 //console.log('calling our symbol...');
 if (env.root && !env.novirtual) core[name].instances[env.root.uid] = env.root; //if it was evaluated insdide the container, then, add it to the tracking list
-if (env.hold) return ['JSObject', core[name].data];
+//if (env.hold) return ['JSObject', core[name].data];
 
 return core[name].data;
 }
 
 core[name].update = async (args, env) => {
-if (env.hold) return ['JSObject', core[name].data];
+//if (env.hold) return ['JSObject', core[name].data];
 return core[name].data;
 }    
 
@@ -840,6 +841,8 @@ core.Set.destroy = (args, env) => {
 interpretate(args[1], env);
 }
 
+core.Set.update = core.Set
+
 core.SetDelayed = async (args, env) => {
 //just copy Set without intepreteate()
 
@@ -852,33 +855,30 @@ const l = (await interpretate(args[0], {...env, novirtual:true})).length;
 return l;
 }
 
+//todo needs so more optimizations!!!
+//do not evlaute the whole stuff
 core.Part = async (args, env) => {
-const p = await interpretate(args[1], env);
-//console.log('taking part '+p);
-const data = await interpretate(args[0], {...env, hold:true});
-
-//console.log(JSON.stringify(data));
-
-if (p instanceof Array) {
-
-if (core._typeof(data, env) == 'JSObject') return p.map(i => data[1][i-1]);
-return await interpretate(p.map(i => data[1][i-1]), env);
-} else {
-
-
-//console.log('data: '+JSON.stringify(data));
-if (core._typeof(data, env) == 'JSObject') return data[1][p-1];
-return await interpretate(data[p-1], env);
-}
+  const p = await interpretate(args[1], env);
+  const data = await interpretate(args[0], {...env});
+  if (Array.isArray(p)) {
+    return p.map((e) => data[e-1]);
+  } else {
+    return data[p-1];
+  }
 }  
 
 core.Part.update = core.Part;
+core.Part.destroy = async (args, env) => {
+  const p = await interpretate(args[1], env);
+  const data = await interpretate(args[0], {...env})
+} 
 
-core.JSObject = (args, env) => {
-return args[0];
+core.JSObject = async (args, env) => {
+  return args[0];
 }
 
 core.JSObject.update = core.JSObject;
+core.JSObject.destroy = core.JSObject;
 
 core.FrontUpdateSymbol = (args, env) => {
 const name = interpretate(args[0], env);
@@ -910,7 +910,7 @@ return new UnevaluedSymbl() aka JS object
 core.Flatten = async (args, env) => {
 //always reset hold if it is there, that it wont propagate
 const result = (await interpretate(args[0], {...env, hold:false})).flat(Infinity);
-if (env.hold) return ['JSObject', result];
+//if (env.hold) return ['JSObject', result];
 return result;
 }
 
@@ -931,7 +931,7 @@ return resultArray
 }, []);
 
 
-if (env.hold) return ['JSObject', result];
+//if (env.hold) return ['JSObject', result];
 return result;
 }  
 
@@ -1005,7 +1005,7 @@ interpretate(args[1], env);
 core.Map = async (args, env) => {
 const func = args[0];
 const array = await interpretate(args[1], {...env, hold:false}); 
-console.log(array);
+
 
 const result = [];
 
@@ -1013,7 +1013,7 @@ for (const el of array) {
 result.push(await interpretate([func, ['JSObject', el]], {...env, hold:false}));
 }
 
-if (env.hold) return ["JSObject", result];
+//if (env.hold) return ["JSObject", result];
 return result;
 }
 

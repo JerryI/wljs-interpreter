@@ -106,7 +106,7 @@ var interpretate = (d, env = {}) => {
       //checking the method
 
 
-      if ('method' in env) {
+      if (env['method']) {
         if (!env.context[name][env.method]) return console.error('method '+env['method']+' is not defined for '+name);
         return env.context[name][env.method](args, env);
       }
@@ -133,7 +133,7 @@ var interpretate = (d, env = {}) => {
     if (name in c[i]) {
       //console.log('symbol '+name+' was found in '+c[i].name);
 
-      if ('method' in env) {
+      if (env['method']) {
         if (!c[i][name][env.method]) return console.error('method '+env['method']+' is not defined for '+name);
         return c[i][name][env.method](args, env);
       }
@@ -252,16 +252,16 @@ interpretate.anonymous = async (d, org) => {
     const data = await interpretate(core[name].data, env);
 
     if (env.root && !env.novirtual) core[name].instances[env.root.uid] = env.root; //if it was evaluated insdide the container, then, add it to the tracking list
-    if (env.hold) return ['JSObject', core[name].data];
+    //if (env.hold) return ['JSObject', core[name].data];
 
     return data;
   }
 
   core[name].update = async (args, env) => {
     //evaluate in the context
-
+ 
     const data = await interpretate(core[name].data, env);
-    if (env.hold) return ['JSObject', data];
+    //if (env.hold) return ['JSObject', data];
     return data;
   }  
 

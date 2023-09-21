@@ -704,7 +704,7 @@ function updateIframe(code, codejs) {
      
         <link rel="stylesheet" href="iframe.css">
         <script>             
-        window.console = {
+        /*window.console = {
           log: function(str){
               //REM: Forward the string to the top window.
               //REM: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
@@ -719,8 +719,8 @@ function updateIframe(code, codejs) {
             //REM: Forward the string to the top window.
             //REM: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
             window.parent.postMessage({kind: 'error', 'text':JSON.stringify(str)}, '*');
-          }                  
-        };
+          }                     
+        };*/               
         window.onerror = (a, b, c, d, e) => {
 
           window.parent.postMessage({kind: 'error', 'text': a}, '*');
@@ -896,6 +896,8 @@ function zen() {
     (0, _dom.elements).sourceholder.remove();
     (0, _dom.elements).code.remove();
     (0, _dom.elements).output.style.height = "100%";
+    (0, _dom.elements).output.style.background = "transparent";
+    document.body.style.overflow = "hidden";
     document.getElementsByClassName("button-container")[0].remove();
 }
 (0, _dom.elements).logbutton.addEventListener("click", ()=>{
@@ -6739,6 +6741,7 @@ parcelHelpers.export(exports, "closeHoverTooltips", ()=>closeHoverTooltips);
 parcelHelpers.export(exports, "crosshairCursor", ()=>crosshairCursor);
 parcelHelpers.export(exports, "drawSelection", ()=>drawSelection);
 parcelHelpers.export(exports, "dropCursor", ()=>dropCursor);
+parcelHelpers.export(exports, "getDrawSelectionConfig", ()=>getDrawSelectionConfig);
 parcelHelpers.export(exports, "getPanel", ()=>getPanel);
 parcelHelpers.export(exports, "getTooltip", ()=>getTooltip);
 parcelHelpers.export(exports, "gutter", ()=>gutter);
@@ -7290,7 +7293,7 @@ function replaceRange(parent, fromI, fromOff, toI, toOff, insert, breakAtStart, 
     if (toI < children.length) {
         let after = children[toI];
         // Make sure the end of the child after the update is preserved in `after`
-        if (after && toOff < after.length) {
+        if (after && (toOff < after.length || after.breakAfter && (last === null || last === void 0 ? void 0 : last.breakAfter))) {
             // If we're splitting a child, separate part of it to avoid that
             // being mangled when updating the child before the update.
             if (fromI == toI) {
@@ -9953,7 +9956,7 @@ function moveVertically(view, start, forward, distance) {
     if (startPos == (forward ? view.state.doc.length : 0)) return (0, _state.EditorSelection).cursor(startPos, start.assoc);
     let goal = start.goalColumn, startY;
     let rect = view.contentDOM.getBoundingClientRect();
-    let startCoords = view.coordsAtPos(startPos), docTop = view.documentTop;
+    let startCoords = view.coordsAtPos(startPos, start.assoc || -1), docTop = view.documentTop;
     if (startCoords) {
         if (goal == null) goal = startCoords.left - rect.left;
         startY = dir < 0 ? startCoords.top : startCoords.bottom;
@@ -9970,7 +9973,11 @@ function moveVertically(view, start, forward, distance) {
             x: resolvedGoal,
             y: curY
         }, false, dir);
-        if (curY < rect.top || curY > rect.bottom || (dir < 0 ? pos < startPos : pos > startPos)) return (0, _state.EditorSelection).cursor(pos, start.assoc, undefined, goal);
+        if (curY < rect.top || curY > rect.bottom || (dir < 0 ? pos < startPos : pos > startPos)) {
+            let charRect = view.docView.coordsForChar(pos);
+            let assoc = !charRect || curY < charRect.top ? -1 : 1;
+            return (0, _state.EditorSelection).cursor(pos, assoc, undefined, goal);
+        }
     }
 }
 function skipAtomicRanges(atoms, pos, bias) {
@@ -10037,7 +10044,7 @@ class InputState {
         this.handleEvent = this.handleEvent.bind(this);
         view.scrollDOM.addEventListener("mousedown", (event)=>{
             if (event.target == view.scrollDOM && event.clientY > view.contentDOM.getBoundingClientRect().bottom) {
-                this.handleEvent(event);
+                this.runHandlers("mousedown", event);
                 if (!event.defaultPrevented && event.button == 2) {
                     // Make sure the content covers the entire scroller height, in order
                     // to catch a native context menu click below it
@@ -10048,7 +10055,7 @@ class InputState {
             }
         });
         view.scrollDOM.addEventListener("drop", (event)=>{
-            if (event.target == view.scrollDOM && event.clientY > view.contentDOM.getBoundingClientRect().bottom) this.handleEvent(event);
+            if (event.target == view.scrollDOM && event.clientY > view.contentDOM.getBoundingClientRect().bottom) this.runHandlers("drop", event);
         });
         this.notifiedFocused = view.hasFocus;
         // On Safari adding an input event handler somehow prevents an
@@ -14377,6 +14384,13 @@ content).
         nativeSelectionHidden.of(true)
     ];
 }
+/**
+Retrieve the [`drawSelection`](https://codemirror.net/6/docs/ref/#view.drawSelection) configuration
+for this state. (Note that this will return a set of defaults even
+if `drawSelection` isn't enabled.)
+*/ function getDrawSelectionConfig(state) {
+    return state.facet(selectionConfig);
+}
 function configChanged(update) {
     return update.startState.facet(selectionConfig) != update.state.facet(selectionConfig);
 }
@@ -15193,6 +15207,7 @@ const tooltipPlugin = /*@__PURE__*/ ViewPlugin.fromClass(class {
             tooltipView.dom.remove();
             (_a = tooltipView.destroy) === null || _a === void 0 || _a.call(tooltipView);
         }
+        if (this.parent) this.container.remove();
         (_b = this.intersectionObserver) === null || _b === void 0 || _b.disconnect();
         clearTimeout(this.measureTimeout);
     }
@@ -15610,8 +15625,8 @@ tooltips. This can be useful when something happens (such as a
 re-positioning or CSS change affecting the editor) that could
 invalidate the existing tooltip positions.
 */ function repositionTooltips(view) {
-    var _a;
-    (_a = view.plugin(tooltipPlugin)) === null || _a === void 0 || _a.maybeMeasure();
+    let plugin = view.plugin(tooltipPlugin);
+    if (plugin) plugin.maybeMeasure();
 }
 const panelConfig = /*@__PURE__*/ (0, _state.Facet).define({
     combine (configs) {
@@ -17100,16 +17115,16 @@ class LanguageState {
         // end position or the end of the viewport, to avoid slowing down
         // state updates with parse work beyond the viewport.
         let upto = this.context.treeLen == tr.startState.doc.length ? undefined : Math.max(tr.changes.mapPos(this.context.treeLen), newCx.viewport.to);
-        if (!newCx.work(20 /* Apply */ , upto)) newCx.takeTree();
+        if (!newCx.work(20 /* Work.Apply */ , upto)) newCx.takeTree();
         return new LanguageState(newCx);
     }
     static init(state) {
-        let vpTo = Math.min(3000 /* InitViewport */ , state.doc.length);
+        let vpTo = Math.min(3000 /* Work.InitViewport */ , state.doc.length);
         let parseState = ParseContext.create(state.facet(language).parser, state, {
             from: 0,
             to: vpTo
         });
-        if (!parseState.work(20 /* Apply */ , vpTo)) parseState.takeTree();
+        if (!parseState.work(20 /* Work.Apply */ , vpTo)) parseState.takeTree();
         return new LanguageState(parseState);
     }
 }
@@ -17122,15 +17137,15 @@ Language.state = /*@__PURE__*/ (0, _state.StateField).define({
     }
 });
 let requestIdle = (callback)=>{
-    let timeout = setTimeout(()=>callback(), 500 /* MaxPause */ );
+    let timeout = setTimeout(()=>callback(), 500 /* Work.MaxPause */ );
     return ()=>clearTimeout(timeout);
 };
 if (typeof requestIdleCallback != "undefined") requestIdle = (callback)=>{
     let idle = -1, timeout = setTimeout(()=>{
         idle = requestIdleCallback(callback, {
-            timeout: 400 /* MinPause */ 
+            timeout: 400 /* Work.MinPause */ 
         });
-    }, 100 /* MinPause */ );
+    }, 100 /* Work.MinPause */ );
     return ()=>idle < 0 ? clearTimeout(timeout) : cancelIdleCallback(idle);
 };
 const isInputPending = typeof navigator != "undefined" && ((_a = navigator.scheduling) === null || _a === void 0 ? void 0 : _a.isInputPending) ? ()=>navigator.scheduling.isInputPending() : null;
@@ -17149,8 +17164,8 @@ const parseWorker = /*@__PURE__*/ (0, _view.ViewPlugin).fromClass(class ParseWor
     update(update) {
         let cx = this.view.state.field(Language.state).context;
         if (cx.updateViewport(update.view.viewport) || this.view.viewport.to > cx.treeLen) this.scheduleWork();
-        if (update.docChanged) {
-            if (this.view.hasFocus) this.chunkBudget += 50 /* ChangeBonus */ ;
+        if (update.docChanged || update.selectionSet) {
+            if (this.view.hasFocus) this.chunkBudget += 50 /* Work.ChangeBonus */ ;
             this.scheduleWork();
         }
         this.checkAsyncSchedule(cx);
@@ -17164,17 +17179,17 @@ const parseWorker = /*@__PURE__*/ (0, _view.ViewPlugin).fromClass(class ParseWor
         this.working = null;
         let now = Date.now();
         if (this.chunkEnd < now && (this.chunkEnd < 0 || this.view.hasFocus)) {
-            this.chunkEnd = now + 30000 /* ChunkTime */ ;
-            this.chunkBudget = 3000 /* ChunkBudget */ ;
+            this.chunkEnd = now + 30000 /* Work.ChunkTime */ ;
+            this.chunkBudget = 3000 /* Work.ChunkBudget */ ;
         }
         if (this.chunkBudget <= 0) return; // No more budget
         let { state, viewport: { to: vpTo } } = this.view, field = state.field(Language.state);
-        if (field.tree == field.context.tree && field.context.isDone(vpTo + 100000 /* MaxParseAhead */ )) return;
-        let endTime = Date.now() + Math.min(this.chunkBudget, 100 /* Slice */ , deadline && !isInputPending ? Math.max(25 /* MinSlice */ , deadline.timeRemaining() - 5) : 1e9);
+        if (field.tree == field.context.tree && field.context.isDone(vpTo + 100000 /* Work.MaxParseAhead */ )) return;
+        let endTime = Date.now() + Math.min(this.chunkBudget, 100 /* Work.Slice */ , deadline && !isInputPending ? Math.max(25 /* Work.MinSlice */ , deadline.timeRemaining() - 5) : 1e9);
         let viewportFirst = field.context.treeLen < vpTo && state.doc.length > vpTo + 1000;
         let done = field.context.work(()=>{
             return isInputPending && isInputPending() || Date.now() > endTime;
-        }, vpTo + (viewportFirst ? 0 : 100000 /* MaxParseAhead */ ));
+        }, vpTo + (viewportFirst ? 0 : 100000 /* Work.MaxParseAhead */ ));
         this.chunkBudget -= Date.now() - now;
         if (done || this.chunkBudget <= 0) {
             field.context.takeTree();
@@ -17517,7 +17532,24 @@ indicates that no definitive indentation can be determined.
 */ const indentNodeProp = /*@__PURE__*/ new (0, _common.NodeProp)();
 // Compute the indentation for a given position from the syntax tree.
 function syntaxIndentation(cx, ast, pos) {
-    return indentFrom(ast.resolveInner(pos).enterUnfinishedNodesBefore(pos), pos, cx);
+    let stack = ast.resolveStack(pos);
+    let inner = stack.node.enterUnfinishedNodesBefore(pos);
+    if (inner != stack.node) {
+        let add = [];
+        for(let cur = inner; cur != stack.node; cur = cur.parent)add.push(cur);
+        for(let i = add.length - 1; i >= 0; i--)stack = {
+            node: add[i],
+            next: stack
+        };
+    }
+    return indentFor(stack, cx, pos);
+}
+function indentFor(stack, cx, pos) {
+    for(let cur = stack; cur; cur = cur.next){
+        let strategy = indentStrategy(cur.node);
+        if (strategy) return strategy(TreeIndentContext.create(cx, pos, cur));
+    }
+    return 0;
 }
 function ignoreClosed(cx) {
     return cx.pos == cx.options.simulateBreak && cx.options.simulateDoubleBreak;
@@ -17532,13 +17564,6 @@ function indentStrategy(tree) {
     }
     return tree.parent == null ? topIndent : null;
 }
-function indentFrom(node, pos, base) {
-    for(; node; node = node.parent){
-        let strategy = indentStrategy(node);
-        if (strategy) return strategy(TreeIndentContext.create(base, pos, node));
-    }
-    return null;
-}
 function topIndent() {
     return 0;
 }
@@ -17549,18 +17574,23 @@ methods to indentation functions registered on syntax nodes.
     constructor(base, /**
     The position at which indentation is being computed.
     */ pos, /**
-    The syntax tree node to which the indentation strategy
-    applies.
-    */ node){
+    @internal
+    */ context){
         super(base.state, base.options);
         this.base = base;
         this.pos = pos;
-        this.node = node;
+        this.context = context;
+    }
+    /**
+    The syntax tree node to which the indentation strategy
+    applies.
+    */ get node() {
+        return this.context.node;
     }
     /**
     @internal
-    */ static create(base, pos, node) {
-        return new TreeIndentContext(base, pos, node);
+    */ static create(base, pos, context) {
+        return new TreeIndentContext(base, pos, context);
     }
     /**
     Get the text directly after `this.pos`, either the entire line
@@ -17595,8 +17625,7 @@ methods to indentation functions registered on syntax nodes.
     Continue looking for indentations in the node's parent nodes,
     and return the result of that.
     */ continue() {
-        let parent = this.node.parent;
-        return parent ? indentFrom(parent, this.pos, this.base) : 0;
+        return indentFor(this.context.next, this.base, this.pos);
     }
 }
 function isParent(parent, of) {
@@ -17729,9 +17758,10 @@ that start and end with delimiters.
 function syntaxFolding(state, start, end) {
     let tree = syntaxTree(state);
     if (tree.length < end) return null;
-    let inner = tree.resolveInner(end, 1);
+    let stack = tree.resolveStack(end, 1);
     let found = null;
-    for(let cur = inner; cur; cur = cur.parent){
+    for(let iter = stack; iter; iter = iter.next){
+        let cur = iter.node;
         if (cur.to <= end || cur.from > end) continue;
         if (found && cur.from < start) break;
         let prop = cur.type.prop(foldNodeProp);
@@ -18793,7 +18823,7 @@ A [language](https://codemirror.net/6/docs/ref/#language.Language) class based o
             state = this.streamParser.startState(cx.unit);
             statePos = 0;
         }
-        if (pos - statePos > 10000 /* MaxIndentScanDist */ ) return null;
+        if (pos - statePos > 10000 /* C.MaxIndentScanDist */ ) return null;
         while(statePos < pos){
             let line = cx.state.doc.lineAt(statePos), end = Math.min(pos, line.to);
             if (line.length) {
@@ -18872,7 +18902,7 @@ class Parse {
             this.chunks.push(tree.children[i]);
             this.chunkPos.push(tree.positions[i]);
         }
-        if (context && this.parsedPos < context.viewport.from - 100000 /* MaxDistanceBeforeViewport */ ) {
+        if (context && this.parsedPos < context.viewport.from - 100000 /* C.MaxDistanceBeforeViewport */ ) {
             this.state = this.lang.streamParser.startState(getIndentUnit(context.state));
             context.skipUntilInView(this.parsedPos, context.viewport.from);
             this.parsedPos = context.viewport.from;
@@ -18882,7 +18912,7 @@ class Parse {
     advance() {
         let context = ParseContext.get();
         let parseEnd = this.stoppedAt == null ? this.to : Math.min(this.to, this.stoppedAt);
-        let end = Math.min(parseEnd, this.chunkStart + 2048 /* ChunkSize */ );
+        let end = Math.min(parseEnd, this.chunkStart + 2048 /* C.ChunkSize */ );
         if (context) end = Math.min(end, context.viewport.to);
         while(this.parsedPos < end)this.parseLine(context);
         if (this.chunkStart < this.parsedPos) this.finishChunk();
@@ -18953,7 +18983,7 @@ class Parse {
         else while(!stream.eol()){
             let token = readToken(streamParser.token, stream, this.state);
             if (token) offset = this.emitToken(this.lang.tokenTable.resolve(token), this.parsedPos + stream.start, this.parsedPos + stream.pos, 4, offset);
-            if (stream.start > 10000 /* MaxLineLength */ ) break;
+            if (stream.start > 10000 /* C.MaxLineLength */ ) break;
         }
         this.parsedPos = end;
         this.moveRangeIndex();
@@ -18966,7 +18996,7 @@ class Parse {
             length: this.parsedPos - this.chunkStart,
             nodeSet,
             topID: 0,
-            maxBufferLength: 2048 /* ChunkSize */ ,
+            maxBufferLength: 2048 /* C.ChunkSize */ ,
             reused: this.chunkReused
         });
         tree = new (0, _common.Tree)(tree.type, tree.children, tree.positions, tree.length, [
@@ -19103,8 +19133,6 @@ function docID(data) {
 }
 
 },{"@lezer/common":"6NJEQ","@codemirror/state":"80zPS","@codemirror/view":"fBkgq","@lezer/highlight":"jPvEX","style-mod":"hU20f","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6NJEQ":[function(require,module,exports) {
-// FIXME profile adding a per-Tree TreeNode cache, validating it by
-// parent pointer
 /**
 The default maximum length of a `TreeBuffer` node.
 */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -19229,6 +19257,11 @@ represented by another tree.
         this.tree = tree;
         this.overlay = overlay;
         this.parser = parser;
+    }
+    /**
+    @internal
+    */ static get(tree) {
+        return tree && tree.props && tree.props[NodeProp.mounted.id];
     }
 }
 const noProps = Object.create(null);
@@ -19440,7 +19473,7 @@ move around to adjacent nodes.
     /**
     @internal
     */ toString() {
-        let mounted = this.prop(NodeProp.mounted);
+        let mounted = MountedTree.get(this);
         if (mounted && !mounted.overlay) return mounted.tree.toString();
         let children = "";
         for (let ch of this.children){
@@ -19501,6 +19534,15 @@ move around to adjacent nodes.
         let node = resolveNode(CachedInnerNode.get(this) || this.topNode, pos, side, true);
         CachedInnerNode.set(this, node);
         return node;
+    }
+    /**
+    In some situations, it can be useful to iterate through all
+    nodes around a position, including those in overlays that don't
+    directly cover the position. This method gives you an iterator
+    that will produce all nodes, from small to big, around the given
+    position.
+    */ resolveStack(pos, side = 0) {
+        return stackIterator(this, pos, side);
     }
     /**
     Iterate over the tree and its children, calling `enter` for any
@@ -19677,18 +19719,6 @@ function checkSide(side, pos, from, to) {
             return true;
     }
 }
-function enterUnfinishedNodesBefore(node, pos) {
-    let scan = node.childBefore(pos);
-    while(scan){
-        let last = scan.lastChild;
-        if (!last || last.to != scan.to) break;
-        if (last.type.isError && last.from == last.to) {
-            node = scan;
-            scan = last.prevSibling;
-        } else scan = last;
-    }
-    return node;
-}
 function resolveNode(node, pos, side, overlays) {
     var _a;
     // Move up to a node that actually holds the position, if possible
@@ -19708,9 +19738,49 @@ function resolveNode(node, pos, side, overlays) {
         node = inner;
     }
 }
-class TreeNode {
+class BaseNode {
+    cursor(mode = 0) {
+        return new TreeCursor(this, mode);
+    }
+    getChild(type, before = null, after = null) {
+        let r = getChildren(this, type, before, after);
+        return r.length ? r[0] : null;
+    }
+    getChildren(type, before = null, after = null) {
+        return getChildren(this, type, before, after);
+    }
+    resolve(pos, side = 0) {
+        return resolveNode(this, pos, side, false);
+    }
+    resolveInner(pos, side = 0) {
+        return resolveNode(this, pos, side, true);
+    }
+    matchContext(context) {
+        return matchNodeContext(this, context);
+    }
+    enterUnfinishedNodesBefore(pos) {
+        let scan = this.childBefore(pos), node = this;
+        while(scan){
+            let last = scan.lastChild;
+            if (!last || last.to != scan.to) break;
+            if (last.type.isError && last.from == last.to) {
+                node = scan;
+                scan = last.prevSibling;
+            } else scan = last;
+        }
+        return node;
+    }
+    get node() {
+        return this;
+    }
+    get next() {
+        return this.parent;
+    }
+}
+class TreeNode extends BaseNode {
     constructor(_tree, from, // Index in parent node, set to -1 if the node is not a direct child of _parent.node (overlay)
     index, _parent){
+        super();
         this._tree = _tree;
         this.from = from;
         this.index = index;
@@ -19736,7 +19806,7 @@ class TreeNode {
                     if (index > -1) return new BufferNode(new BufferContext(parent, next, i, start), null, index);
                 } else if (mode & IterMode.IncludeAnonymous || !next.type.isAnonymous || hasChild(next)) {
                     let mounted;
-                    if (!(mode & IterMode.IgnoreMounts) && next.props && (mounted = next.prop(NodeProp.mounted)) && !mounted.overlay) return new TreeNode(mounted.tree, start, i, parent);
+                    if (!(mode & IterMode.IgnoreMounts) && (mounted = MountedTree.get(next)) && !mounted.overlay) return new TreeNode(mounted.tree, start, i, parent);
                     let inner = new TreeNode(next, start, i, parent);
                     return mode & IterMode.IncludeAnonymous || !inner.type.isAnonymous ? inner : inner.nextChild(dir < 0 ? next.children.length - 1 : 0, dir, pos, side);
                 }
@@ -19762,7 +19832,7 @@ class TreeNode {
     }
     enter(pos, side, mode = 0) {
         let mounted;
-        if (!(mode & IterMode.IgnoreOverlays) && (mounted = this._tree.prop(NodeProp.mounted)) && mounted.overlay) {
+        if (!(mode & IterMode.IgnoreOverlays) && (mounted = MountedTree.get(this._tree)) && mounted.overlay) {
             let rPos = pos - this.from;
             for (let { from, to } of mounted.overlay){
                 if ((side > 0 ? from <= rPos : from < rPos) && (side < 0 ? to >= rPos : to > rPos)) return new TreeNode(mounted.tree, mounted.overlay[0].from + this.from, -1, this);
@@ -19784,41 +19854,16 @@ class TreeNode {
     get prevSibling() {
         return this._parent && this.index >= 0 ? this._parent.nextChild(this.index - 1, -1, 0, 4 /* Side.DontCare */ ) : null;
     }
-    cursor(mode = 0) {
-        return new TreeCursor(this, mode);
-    }
     get tree() {
         return this._tree;
     }
     toTree() {
         return this._tree;
     }
-    resolve(pos, side = 0) {
-        return resolveNode(this, pos, side, false);
-    }
-    resolveInner(pos, side = 0) {
-        return resolveNode(this, pos, side, true);
-    }
-    enterUnfinishedNodesBefore(pos) {
-        return enterUnfinishedNodesBefore(this, pos);
-    }
-    getChild(type, before = null, after = null) {
-        let r = getChildren(this, type, before, after);
-        return r.length ? r[0] : null;
-    }
-    getChildren(type, before = null, after = null) {
-        return getChildren(this, type, before, after);
-    }
     /**
     @internal
     */ toString() {
         return this._tree.toString();
-    }
-    get node() {
-        return this;
-    }
-    matchContext(context) {
-        return matchNodeContext(this, context);
     }
 }
 function getChildren(node, type, before, after) {
@@ -19851,7 +19896,7 @@ class BufferContext {
         this.start = start;
     }
 }
-class BufferNode {
+class BufferNode extends BaseNode {
     get name() {
         return this.type.name;
     }
@@ -19862,6 +19907,7 @@ class BufferNode {
         return this.context.start + this.context.buffer.buffer[this.index + 2];
     }
     constructor(context, _parent, index){
+        super();
         this.context = context;
         this._parent = _parent;
         this.index = index;
@@ -19908,9 +19954,6 @@ class BufferNode {
         if (this.index == parentStart) return this.externalSibling(-1);
         return new BufferNode(this.context, this._parent, buffer.findChild(parentStart, this.index, -1, 0, 4 /* Side.DontCare */ ));
     }
-    cursor(mode = 0) {
-        return new TreeCursor(this, mode);
-    }
     get tree() {
         return null;
     }
@@ -19925,33 +19968,57 @@ class BufferNode {
         }
         return new Tree(this.type, children, positions, this.to - this.from);
     }
-    resolve(pos, side = 0) {
-        return resolveNode(this, pos, side, false);
-    }
-    resolveInner(pos, side = 0) {
-        return resolveNode(this, pos, side, true);
-    }
-    enterUnfinishedNodesBefore(pos) {
-        return enterUnfinishedNodesBefore(this, pos);
-    }
     /**
     @internal
     */ toString() {
         return this.context.buffer.childString(this.index);
     }
-    getChild(type, before = null, after = null) {
-        let r = getChildren(this, type, before, after);
-        return r.length ? r[0] : null;
+}
+function iterStack(heads) {
+    if (!heads.length) return null;
+    if (heads.length == 1) return heads[0];
+    let pick = 0, picked = heads[0];
+    for(let i = 1; i < heads.length; i++){
+        let node = heads[i];
+        if (node.from > picked.from || node.to < picked.to) {
+            picked = node;
+            pick = i;
+        }
     }
-    getChildren(type, before = null, after = null) {
-        return getChildren(this, type, before, after);
+    let next = picked instanceof TreeNode && picked.index < 0 ? null : picked.parent;
+    let newHeads = heads.slice();
+    if (next) newHeads[pick] = next;
+    else newHeads.splice(pick, 1);
+    return new StackIterator(newHeads, picked);
+}
+class StackIterator {
+    constructor(heads, node){
+        this.heads = heads;
+        this.node = node;
     }
-    get node() {
-        return this;
+    get next() {
+        return iterStack(this.heads);
     }
-    matchContext(context) {
-        return matchNodeContext(this, context);
+}
+function stackIterator(tree, pos, side) {
+    let inner = tree.resolveInner(pos, side), layers = null;
+    for(let scan = inner instanceof TreeNode ? inner : inner.context.parent; scan; scan = scan.parent)if (scan.index < 0) {
+        let parent = scan.parent;
+        (layers || (layers = [
+            inner
+        ])).push(parent.resolve(pos, side));
+        scan = parent;
+    } else {
+        let mount = MountedTree.get(scan.tree);
+        // Relevant overlay branching off
+        if (mount && mount.overlay && mount.overlay[0].from <= pos && mount.overlay[mount.overlay.length - 1].to >= pos) {
+            let root = new TreeNode(mount.tree, mount.overlay[0].from + scan.from, 0, null);
+            (layers || (layers = [
+                inner
+            ])).push(resolveNode(root, pos, side, false));
+        }
     }
+    return layers ? iterStack(layers) : inner;
 }
 /**
 A tree cursor object focuses on a given node in a syntax tree, and
@@ -67479,7 +67546,7 @@ document.
             };
             else this.matches.push(1, pos);
         }
-        if (match && this.test && !this.test(match.from, match.to, this.buffer, this.bufferPos)) match = null;
+        if (match && this.test && !this.test(match.from, match.to, this.buffer, this.bufferStart)) match = null;
         return match;
     }
 }
@@ -70973,30 +71040,29 @@ about the parse state.
     // Apply a shift action
     /**
     @internal
-    */ shift(action, next, nextEnd) {
-        let start = this.pos;
+    */ shift(action, type, start, end) {
         if (action & 131072 /* Action.GotoFlag */ ) this.pushState(action & 65535 /* Action.ValueMask */ , this.pos);
         else if ((action & 262144 /* Action.StayFlag */ ) == 0) {
             let nextState = action, { parser } = this.p;
-            if (nextEnd > this.pos || next <= parser.maxNode) {
-                this.pos = nextEnd;
-                if (!parser.stateFlag(nextState, 1 /* StateFlag.Skipped */ )) this.reducePos = nextEnd;
+            if (end > this.pos || type <= parser.maxNode) {
+                this.pos = end;
+                if (!parser.stateFlag(nextState, 1 /* StateFlag.Skipped */ )) this.reducePos = end;
             }
             this.pushState(nextState, start);
-            this.shiftContext(next, start);
-            if (next <= parser.maxNode) this.buffer.push(next, start, nextEnd, 4);
+            this.shiftContext(type, start);
+            if (type <= parser.maxNode) this.buffer.push(type, start, end, 4);
         } else {
-            this.pos = nextEnd;
-            this.shiftContext(next, start);
-            if (next <= this.p.parser.maxNode) this.buffer.push(next, start, nextEnd, 4);
+            this.pos = end;
+            this.shiftContext(type, start);
+            if (type <= this.p.parser.maxNode) this.buffer.push(type, start, end, 4);
         }
     }
     // Apply an action
     /**
     @internal
-    */ apply(action, next, nextEnd) {
+    */ apply(action, next, nextStart, nextEnd) {
         if (action & 65536 /* Action.ReduceFlag */ ) this.reduce(action);
-        else this.shift(action, next, nextEnd);
+        else this.shift(action, next, nextStart, nextEnd);
     }
     // Add a prebuilt (reused) node into the buffer.
     /**
@@ -71982,7 +72048,8 @@ class Parse {
             let action = actions[i++], term = actions[i++], end = actions[i++];
             let last = i == actions.length || !split;
             let localStack = last ? stack : stack.split();
-            localStack.apply(action, term, end);
+            let main = this.tokens.mainToken;
+            localStack.apply(action, term, main ? main.start : localStack.pos, end);
             if (verbose) console.log(base + this.stackID(localStack) + ` (via ${(action & 65536 /* Action.ReduceFlag */ ) == 0 ? "shift" : `reduce of ${parser.getName(action & 65535 /* Action.ValueMask */ )}`} for ${parser.getName(term)} @ ${start}${localStack == stack ? "" : ", split"})`);
             if (last) return true;
             else if (localStack.pos > start) stacks.push(localStack);
@@ -72521,6 +72588,7 @@ parcelHelpers.export(exports, "closeHoverTooltips", ()=>closeHoverTooltips);
 parcelHelpers.export(exports, "crosshairCursor", ()=>crosshairCursor);
 parcelHelpers.export(exports, "drawSelection", ()=>drawSelection);
 parcelHelpers.export(exports, "dropCursor", ()=>dropCursor);
+parcelHelpers.export(exports, "getDrawSelectionConfig", ()=>getDrawSelectionConfig);
 parcelHelpers.export(exports, "getPanel", ()=>getPanel);
 parcelHelpers.export(exports, "getTooltip", ()=>getTooltip);
 parcelHelpers.export(exports, "gutter", ()=>gutter);
@@ -73072,7 +73140,7 @@ function replaceRange(parent, fromI, fromOff, toI, toOff, insert, breakAtStart, 
     if (toI < children.length) {
         let after = children[toI];
         // Make sure the end of the child after the update is preserved in `after`
-        if (after && toOff < after.length) {
+        if (after && (toOff < after.length || after.breakAfter && (last === null || last === void 0 ? void 0 : last.breakAfter))) {
             // If we're splitting a child, separate part of it to avoid that
             // being mangled when updating the child before the update.
             if (fromI == toI) {
@@ -75735,7 +75803,7 @@ function moveVertically(view, start, forward, distance) {
     if (startPos == (forward ? view.state.doc.length : 0)) return (0, _state.EditorSelection).cursor(startPos, start.assoc);
     let goal = start.goalColumn, startY;
     let rect = view.contentDOM.getBoundingClientRect();
-    let startCoords = view.coordsAtPos(startPos), docTop = view.documentTop;
+    let startCoords = view.coordsAtPos(startPos, start.assoc || -1), docTop = view.documentTop;
     if (startCoords) {
         if (goal == null) goal = startCoords.left - rect.left;
         startY = dir < 0 ? startCoords.top : startCoords.bottom;
@@ -75752,7 +75820,11 @@ function moveVertically(view, start, forward, distance) {
             x: resolvedGoal,
             y: curY
         }, false, dir);
-        if (curY < rect.top || curY > rect.bottom || (dir < 0 ? pos < startPos : pos > startPos)) return (0, _state.EditorSelection).cursor(pos, start.assoc, undefined, goal);
+        if (curY < rect.top || curY > rect.bottom || (dir < 0 ? pos < startPos : pos > startPos)) {
+            let charRect = view.docView.coordsForChar(pos);
+            let assoc = !charRect || curY < charRect.top ? -1 : 1;
+            return (0, _state.EditorSelection).cursor(pos, assoc, undefined, goal);
+        }
     }
 }
 function skipAtomicRanges(atoms, pos, bias) {
@@ -75819,7 +75891,7 @@ class InputState {
         this.handleEvent = this.handleEvent.bind(this);
         view.scrollDOM.addEventListener("mousedown", (event)=>{
             if (event.target == view.scrollDOM && event.clientY > view.contentDOM.getBoundingClientRect().bottom) {
-                this.handleEvent(event);
+                this.runHandlers("mousedown", event);
                 if (!event.defaultPrevented && event.button == 2) {
                     // Make sure the content covers the entire scroller height, in order
                     // to catch a native context menu click below it
@@ -75830,7 +75902,7 @@ class InputState {
             }
         });
         view.scrollDOM.addEventListener("drop", (event)=>{
-            if (event.target == view.scrollDOM && event.clientY > view.contentDOM.getBoundingClientRect().bottom) this.handleEvent(event);
+            if (event.target == view.scrollDOM && event.clientY > view.contentDOM.getBoundingClientRect().bottom) this.runHandlers("drop", event);
         });
         this.notifiedFocused = view.hasFocus;
         // On Safari adding an input event handler somehow prevents an
@@ -80159,6 +80231,13 @@ content).
         nativeSelectionHidden.of(true)
     ];
 }
+/**
+Retrieve the [`drawSelection`](https://codemirror.net/6/docs/ref/#view.drawSelection) configuration
+for this state. (Note that this will return a set of defaults even
+if `drawSelection` isn't enabled.)
+*/ function getDrawSelectionConfig(state) {
+    return state.facet(selectionConfig);
+}
 function configChanged(update) {
     return update.startState.facet(selectionConfig) != update.state.facet(selectionConfig);
 }
@@ -80975,6 +81054,7 @@ const tooltipPlugin = /*@__PURE__*/ ViewPlugin.fromClass(class {
             tooltipView.dom.remove();
             (_a = tooltipView.destroy) === null || _a === void 0 || _a.call(tooltipView);
         }
+        if (this.parent) this.container.remove();
         (_b = this.intersectionObserver) === null || _b === void 0 || _b.disconnect();
         clearTimeout(this.measureTimeout);
     }
@@ -81392,8 +81472,8 @@ tooltips. This can be useful when something happens (such as a
 re-positioning or CSS change affecting the editor) that could
 invalidate the existing tooltip positions.
 */ function repositionTooltips(view) {
-    var _a;
-    (_a = view.plugin(tooltipPlugin)) === null || _a === void 0 || _a.maybeMeasure();
+    let plugin = view.plugin(tooltipPlugin);
+    if (plugin) plugin.maybeMeasure();
 }
 const panelConfig = /*@__PURE__*/ (0, _state.Facet).define({
     combine (configs) {
