@@ -109,6 +109,11 @@ core.FrontEndExecutable = async (args, env) => {
     server.send(wrapper + '["' + JSON.stringify(data).replace(/"/gm, "\\\"") + '"]');
   }
 
+  core.ReadClipboard = async (args, env) => {
+    const clipText = await navigator.clipboard.readText();
+    return clipText;
+  }
+
 
   core.PromiseResolve = (args, env) => {
     const uid = interpretate(args[0], env);
