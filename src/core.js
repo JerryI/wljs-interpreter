@@ -101,7 +101,13 @@ core.FrontEndExecutable = async (args, env) => {
     const data = interpretate(args[0], env);          
 
     server.askKernel(data);
-  }         
+  }   
+
+  core.TalkMaster = async (args, env) => {
+    const data = await interpretate(args[0], env);
+    const wrapper = await interpretate(args[1], env);
+    server.send(wrapper + '["' + JSON.stringify(data).replace(/"/gm, "\\\"") + '"]');
+  }
 
 
   core.PromiseResolve = (args, env) => {
