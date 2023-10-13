@@ -1,6 +1,6 @@
 {
   "name": "wljs-interpreter",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "A core library and WL interpreter written in pure JS",
   "defaultPackage": true,
   "wljs-meta": {
@@ -25,7 +25,8 @@
   "homepage": "https://github.com/JerryI/wljs-interpreter#readme",
   "scripts": {
     "start": "parcel index.html --open",
-    "build": "parcel build index.html --public-url ./"
+    "build": "parcel build index.html --public-url ./",
+    "restore": "mkdir _temp && cd _temp && git clone https://github.com/JerryI/wljs-interpreter && mv wljs-interpreter/.git ../.git && cd .. && rm -rf _temp"
   },
   "devDependencies": {
     "@types/node": "^16.7.10",

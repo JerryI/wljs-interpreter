@@ -109,6 +109,12 @@ core.FrontEndExecutable = async (args, env) => {
     server.send(wrapper + '["' + JSON.stringify(data).replace(/"/gm, "\\\"") + '"]');
   }
 
+  core.TalkKernel = async (args, env) => {
+    const data = await interpretate(args[0], env);
+    const wrapper = await interpretate(args[1], env);
+    server.kernel.socket.send(wrapper + '["' + JSON.stringify(data).replace(/"/gm, "\\\"") + '"]');
+  }  
+
   core.ReadClipboard = async (args, env) => {
     const clipText = await navigator.clipboard.readText();
     return clipText;
