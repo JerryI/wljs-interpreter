@@ -85,6 +85,8 @@ core.FrontSubmit = async (args, env) => {
       //merge the scope
       copy.scope = {...copy.scope, ...env.scope};
 
+      //if sleeping?
+      if (copy.wake) copy.wake();
       const result = await interpretate(expr, copy);
       results.push(result);
     }
