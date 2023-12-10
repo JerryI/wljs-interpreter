@@ -627,8 +627,8 @@ if ((await interpretate(args[0], env)) === (await interpretate(args[1], env))) r
 }  
 
 
-core.Alert = (args, env) => {
-alert(interpretate(args[0], env));
+core.Alert = async (args, env) => {
+  alert(await interpretate(args[0], env));
 }
 
 core.Print = async (args, env) => {
