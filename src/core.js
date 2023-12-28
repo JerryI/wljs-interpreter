@@ -93,48 +93,11 @@ core._getRules = async function(args, env) {
     return rules;
 }
 
-core.FireEvent = function(args, env) {
-    const key = interpretate(args[0], env);
-    const data = interpretate(args[1], env);
 
-    server.emitt(key, data);
-}
-
-core.KernelFire = function(args, env) {
-    const data = interpretate(args[0], env);
-
-    server.talkKernel(data);
-}
-
-core.KernelEvaluate = function(args, env) {
-    const data = interpretate(args[0], env);
-
-    server.askKernel(data);
-}
-
-core.TalkMaster = async(args, env) => {
-    const data = await interpretate(args[0], env);
-    const wrapper = await interpretate(args[1], env);
-    server.send(wrapper + '["' + JSON.stringify(data).replace(/"/gm, "\\\"") + '"]');
-}
-
-core.TalkKernel = async(args, env) => {
-    const data = await interpretate(args[0], env);
-    const wrapper = await interpretate(args[1], env);
-    server.kernel.socket.send(wrapper + '["' + JSON.stringify(data).replace(/"/gm, "\\\"") + '"]');
-}
 
 core.ReadClipboard = async(args, env) => {
     const clipText = await navigator.clipboard.readText();
     return clipText;
-}
-
-
-core.PromiseResolve = (args, env) => {
-    const uid = interpretate(args[0], env);
-    console.log('promise resolved! : ' + uid);
-    server.promises[uid].resolve(args[1]);
-    delete server.promises[uid];
 }
 
 core.UpdateFrontEndExecutable = function(args, env) {
@@ -711,6 +674,10 @@ core.Print = async(args, env) => {
     console.log('Out:\t' + JSON.stringify(await interpretate(args[0], env)));
 }
 
+core.Null = () => undefined
+core.Null.update = () => undefined
+core.Null.destory = () => undefined
+
 core.N = (args, env) => {
     const copy = {
         ...env,
@@ -1053,19 +1020,7 @@ core.JSObject = async(args, env) => {
 core.JSObject.update = core.JSObject;
 core.JSObject.destroy = core.JSObject;
 
-core.FrontUpdateSymbol = (args, env) => {
-    const name = interpretate(args[0], env);
-    console.log("update");
-    //update
-    core[name].data = args[1];
 
-    //console.log('instance list');
-    //console.log(core[name].instances);
-
-    for (const inst of Object.values(core[name].instances)) {
-        inst.update();
-    };
-}
 
 /*core.RGBColor =  async (args, env) => {
 const color = [];

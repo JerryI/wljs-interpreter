@@ -24,8 +24,7 @@ window.aflatten = aflatten;
 
 window.isNumeric = isNumeric;
 
-var interpretate = (d, env = {}) => {
-  interpretate.cnt = interpretate.cnt + 1;          
+var interpretate = (d, env = {}) => {        
 
   if (typeof d === 'undefined') {
     console.log('undefined object');
@@ -167,268 +166,24 @@ interpretate.contextExpand = (context) => {
   interpretate.contextes.push(context);
 }
 
-//packed symbols (for the case when Kernel is temporary unavailable)
-interpretate.packedSymbols = {}
-interpretate.usedPackedSymbols = {}
-
-interpretate.garbageCollect = () => {
-  //collected unused packedSymbols
-  console.log('collect garbage!');
-  Object.keys(interpretate.packedSymbols).forEach((s)=>{
-    if (!(s in interpretate.usedPackedSymbols)) {
-      //collect!
-      console.warn('Symbol '+s+' was not used for a long time...');
-      server.send('NotebookDisposeSymbol["'+s+'"]');
-    } else {
-      console.warn('Symbol '+s+' wont be disposed. 200');
-    }
-  });
-
-}
-
 interpretate.anonymous = async (d, org) => {
-  //TODO Check if it set delayed or set... if set, then one need only to cache it
-  console.warn('Anonimous symbol');  
-
-  let name;
-  if (d instanceof Array) {
-    console.error('stack call: ');
-    console.warn(org.global.stack);
-    throw('subvalues are not supported for '+d[0]);
-  } else {
-    name = d;   //symbol
-  }
-
-  let data;
-  let packed = false;
-
-  if (!server.socket) {
-    if (!(name in interpretate.packedSymbols)) {
-      console.error('Symbol '+name+' is undefined in any contextes available. Communication with Wolfram Kernel is not possible for now.');
-    } else {
-      data = interpretate.packedSymbols[name];
-      interpretate.usedPackedSymbols[name] = true;
-      console.warn('packed Symbol: '+name);
-      packed = true;
-    }
-  } else {
-    if (name in interpretate.packedSymbols) {
-      data = interpretate.packedSymbols[name];
-      interpretate.usedPackedSymbols[name] = true;
-      console.warn('packed Symbol: '+name);
-      packed = true;
-    } else {
-      console.warn('sending request to a server... for'+name);
-      data = await server.getSymbol(name); //get the data
-      console.log('got');
-      console.log(data);
-    }
-  }
-  
-  let symbolQ = typeof data === 'string';
-
-  if (symbolQ) {
-    if (data.charAt(0) == "'") symbolQ = false;
-    if (isNumeric(data)) symbolQ = false;
-  }
-
-  if ((symbolQ && !(data in core)) || typeof data == 'undefined') {
-    console.log('checking... '+name);
-    console.log('gained data..'+data);
-    if (!(name in interpretate.packedSymbols)) {
-      throw('Symbol '+data+' is not defined in any contextes and packing'); 
-      return;
-    } else {
-      packed = true;
-      console.warn('packed Symbol: '+name);
-      data = interpretate.packedSymbols[name];
-      interpretate.usedPackedSymbols[name] = true;
-    } 
-  }
-
-  core[name] = async (args, env) => {
-    console.log('calling our symbol...');
-    //evaluate in the context
-    const data = await interpretate(core[name].data, env);
-
-    if (env.root && !env.novirtual) core[name].instances[env.root.uid] = env.root; //if it was evaluated insdide the container, then, add it to the tracking list
-    //if (env.hold) return ['JSObject', core[name].data];
-
-    return data;
-  }
-
-  core[name].update = async (args, env) => {
-    //evaluate in the context
- 
-    const data = await interpretate(core[name].data, env);
-    //if (env.hold) return ['JSObject', data];
-    return data;
-  }  
-
-  core[name].destroy = async (args, env) => {
-
-    delete core[name].instances[env.root.uid];
-    console.warn(env.root.uid + ' was destroyed')
-    console.warn('external symbol was destoryed');
-  }  
-
-  core[name].data = data; //get the data
-
-  if (!packed) server.addTracker(name);
-  server.trackedSymbols[name] = true;
-
-  core[name].virtual = true;
-  core[name].instances = {};
-
-  return interpretate(d, org);
+  throw('Unknown symbol '+ JSON.stringify(d));
 }
 
-//backward transformation
-interpretate.toJSON = (d) => {
-  if (typeof d === 'undefined') {
-    console.log('undefined object');
-    return 'Null';
-  }
-  if (typeof d === 'string') {
-    return "'"+d+"'";
-  }
-  if (typeof d === 'number') {
-    return d; 
-  }
-
-  //if not a JSON array, probably a promise object
-  if (!(d instanceof Array)) {
-    console.error('Unknow object. Replaced with Null');
-    return 'Null';  
-  }
-
-  const sub = [];
-  sub.push('List');
-  sub.push(...d);
-
-  return sub;
-
-}
-
-const fakeSocket = () => {
-  return false;
-}
-
-fakeSocket.q = []
-
-fakeSocket.send = (expr) => {
-  console.warn('No connection to a kernel... keeping in a pocket');
-  fakeSocket.q.push(expr)
-}
-
-//Server API
-let server = {
-  promises : {},
-  socket: fakeSocket,  
-  
-  kernelControl: {
-    
-  },
-
-  trackedSymbols: {},
-  
-  kernel: {
-    socket: {
-      send: () => {
-        socket.send('NotebookPopupFire["error", "No connection to the working kernel. Please create a link first!"]');
-        throw 'No connection to the working kernel. Please create a link first!';
+function jsonStringifyRecursive(obj) {
+  const cache = new Set();
+  return JSON.stringify(obj, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+          if (cache.has(value)) {
+              // Circular reference found, discard key
+              return;
+          }
+          // Store value in our collection
+          cache.add(value);
       }
-    }
-  },
-
-  init(socket) {
-    if (this.socket.q) {
-      console.warn('Sending all quered messages');
-      this.socket.q.forEach((message)=>{
-        socket.send(message);
-      })
-    }
-    this.socket = socket;
-  },
-
-  //evaluate something on the master kernel and make a promise for the reply
-  ask(expr) {
-    const uid = uuidv4();
-
-    const promise = new Deferred();
-    this.promises[uid] = promise;
-
-    this.socket.send('NotebookPromise["'+uid+'", ""]['+expr+']');
-
-    return promise.promise 
-  },
-  //fire event on the secondary kernel (your working area) (no reply)
-  emitt(uid, data) {
-    this.kernel.socket.send('EmittedEvent["'+uid+'", '+data+']');
-  },
-
-  send(expr) {
-    this.socket.send(expr);
-  },
-
-  post: {
-    //for not it is raw association.
-    //it can be packed as normal FILEFORM!
-    emitt(uid, data) {
-      const p = new Deferred();
-      WSPHttpBigQuery('NotebookEmitt[EmittedEvent["'+uid+'", '+data+'], "'+window.Notebook+'"]', p);
-      return p.promise;
-    },
-
-    send(data) {
-      const p = new Deferred();
-      WSPHttpBigQuery(data, p);
-      return p.promise;      
-    }
-  },
-
-  //evaluate something on the secondary kernel (your working area) and make a promise for the reply
-  askKernel(expr) {
-    const uid = uuidv4();
-
-    const promise = new Deferred();
-    this.promises[uid] = promise;
-    //not implemented
-    //console.error('askKernel is not implemented');
-    //console.log('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
-    this.socket.send('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
-
-    return promise.promise    
-  },
-
-  getSymbol(expr) {
-    const uid = uuidv4();
-
-    const promise = new Deferred();
-    this.promises[uid] = promise;
-    //not implemented
-    //console.error('askKernel is not implemented');
-    //console.log('NotebookPromiseKernel["'+uid+'", ""][Hold['+expr+']]');
-    this.socket.send('NotebookGetSymbol["'+uid+'", ""][Hold['+expr+']]');
-
-    return promise.promise     
-  },
-
-  //evaluate something on the secondary kernel (your working area) (no reply)
-  talkKernel(expr) {
-    this.kernel.socket.send('NotebookEmitt['+expr+']');
-  },
-
-  clearObject(uid) {
-    this.socket.send('NotebookGarbagePut["'+uid+'"];');
-  },
-
-  addTracker(name) {
-    console.warn('added tracker for '+name);
-    this.kernel.socket.send('NotebookAddTracking['+name+']')
-  }
+      return value;
+  }, 4);
 }
-
 
 var ObjectHashMap = {}
 var InstancesHashMap = {}
@@ -459,11 +214,8 @@ class ObjectStorage {
   cache = []
 
   garbageCollect() {
-    if (Object.keys(this.refs).length == 0) {
-      server.clearObject(this.uid);
-      this.cached = true;
-      this.cache = ['GarbageCollected', 'Null'];
-    }
+    console.warn('garbage collector is not defined for');
+    console.warn(this);
 
   }         
 
@@ -498,16 +250,17 @@ class ObjectStorage {
   //just get the object (if not in the client -> ask for it and wait)
   get() {
     if (this.cached) return this.cache;
-    const promise = new Deferred();
+    throw('Object not found!');
+    /*const promise = new Deferred();
     console.log('NotebookGetObject["'+this.uid+'"]');
     server.ask('NotebookGetObject["'+this.uid+'"]').then((data)=>{
       this.cache = JSON.parse(interpretate(data));
       this.cached = true;
       console.log('got from the server. storing in cache...');
       promise.resolve(this.cache);
-    })
+    });
 
-    return promise.promise;  
+    return promise.promise;  */
   }
 }
 
@@ -740,7 +493,4 @@ function throttle(cb, delay = () => interpretate.throttle) {
 }
 
 window.throttle = throttle;
-
-window.server = server;
-
 window.interpretate = interpretate;
