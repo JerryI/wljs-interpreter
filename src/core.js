@@ -2,7 +2,7 @@ var core = {};
 core.name = "Core Context";
 interpretate.contextExpand(core);
 
-core.DefaultWidth = 600;
+core.DefaultWidth = 350;
 
 core.ConsoleLog = [];
 
