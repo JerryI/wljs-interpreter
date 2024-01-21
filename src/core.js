@@ -2,7 +2,7 @@ var core = {};
 core.name = "Core Context";
 interpretate.contextExpand(core);
 
-core.DefaultWidth = 600;
+core.DefaultWidth = 350;
 
 core.ConsoleLog = [];
 
@@ -23,7 +23,7 @@ core.True = (args, env) => {
 core.False = (args, env) => {
     return false;
 }
-
+/*
 core.FrontEndExecutable = async(args, env) => {
     const key = interpretate(args[0], env);
     //creates an instance with its own separate env
@@ -45,7 +45,7 @@ core.FrontEndExecutable.destroy = async(args, env) => {
     const key = interpretate(args[0], env);
     await env.global.stack[key].dispose();
 };
-
+*/
 core._typeof = function(args, env) {
     if (typeof args === 'string') {
         if (args.charAt(0) === "'")

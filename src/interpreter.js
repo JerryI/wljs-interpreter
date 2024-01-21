@@ -185,10 +185,9 @@ function jsonStringifyRecursive(obj) {
   }, 4);
 }
 
-var ObjectHashMap = {}
+
 var InstancesHashMap = {}
 
-window.ObjectHashMap = ObjectHashMap
 window.InstancesHashMap = InstancesHashMap
 
 let garbageTimeout = false;
@@ -206,65 +205,7 @@ const collectGarbage = () => {
   });
 }
 
-//storage for the frontend objects / executables
-class ObjectStorage {
-  refs = {}
-  uid = ''
-  cached = false
-  cache = []
 
-  garbageCollect() {
-    console.warn('garbage collector is not defined for');
-    console.warn(this);
-
-  }         
-
-  constructor(uid) {
-    this.uid = uid;
-    ObjectHashMap[uid] = this;
-
-    //check garbage
-    renewGarbageTimer();
-  }           
-
-  //assign an instance of FrontEndExecutable to it
-  assign(obj) {
-    this.refs[obj.instance] = obj;
-  }         
-
-  //remove a reference to the instance of FrontEndExecutable
-  dropref(obj) {
-    console.log('dropped ref: ' + obj.instance);
-    delete this.refs[obj.instance];
-  }         
-
-  //update the data in the storage and go over all assigned objects
-  update(newdata) {
-    this.cache = newdata;
-    Object.keys(this.refs).forEach((ref)=>{
-      //console.log('Updating... ' + this.refs[ref].uid);
-      this.refs[ref].update();
-    });
-  }         
-
-  //just get the object (if not in the client -> ask for it and wait)
-  get() {
-    if (this.cached) return this.cache;
-    throw('Object not found!');
-    /*const promise = new Deferred();
-    console.log('NotebookGetObject["'+this.uid+'"]');
-    server.ask('NotebookGetObject["'+this.uid+'"]').then((data)=>{
-      this.cache = JSON.parse(interpretate(data));
-      this.cached = true;
-      console.log('got from the server. storing in cache...');
-      promise.resolve(this.cache);
-    });
-
-    return promise.promise;  */
-  }
-}
-
-window.ObjectStorage = ObjectStorage
 
 //instance of FrontEndExecutable object
 class ExecutableObject {
@@ -288,19 +229,9 @@ class ExecutableObject {
 
   //run the code inside
   async execute() {
-    console.log('executing '+this.uid+'....');
-    let content;
-
-    if (this.virtual) console.error('execute() method is not allowed on virtual functions!');
-
-    content = await this.storage.get(this.uid);
-
-    //pass local scope
-    this.env.local = this.local;
-    //console.log('interpreting the content of '+this.uid+'....');
-    //console.log('content');
-    //console.log(content);
-    return interpretate(content, this.env);
+    console.log('executing manually '+this.uid+'....');
+    console.log(this.virtual);
+    return interpretate(this.virtual, this.env);
   }
 
   //dispose the object and all three of object underneath
