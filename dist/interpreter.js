@@ -221,7 +221,7 @@ interpretate.anonymous = async (d, org) => {
       console.warn('sending request to a server... for'+name);
       data = await server.getSymbol(name); //get the data
       console.log('got');
-      console.log(data);
+      //console.log(data);
     }
   }
   

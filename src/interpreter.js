@@ -230,7 +230,7 @@ class ExecutableObject {
   //run the code inside
   async execute() {
     console.log('executing manually '+this.uid+'....');
-    console.log(this.virtual);
+    //console.log(this.virtual);
     return interpretate(this.virtual, this.env);
   }
 

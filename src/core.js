@@ -1185,7 +1185,8 @@ core.Rule = async(args, env) => {
         return;
     } else {
         return {
-            key: val
+            lhs: key,
+            rhs: val
         };
     }
 }
