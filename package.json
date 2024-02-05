@@ -11,7 +11,8 @@
       "src/settings.js"
     ],
     "autocomplete": "src/autocomplete.js",
-    "important": true
+    "important": true,
+    "category": "Internal"
   },
   "repository": {
     "type": "git",
