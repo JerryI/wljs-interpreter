@@ -244,14 +244,14 @@ class ExecutableObject {
     //change the mathod of interpreting
     this.env.method = 'destroy';
 
-    if (this.virtual) console.log('virtual type was disposed'); else console.log('normal container was destoryed');
+    //if (this.virtual) console.log('virtual type was disposed'); else console.log('normal container was destoryed');
 
     //unregister from the storage class
-    if (!this.virtual) this.storage.dropref(this);
+    //if (!this.virtual) this.storage.dropref(this);
 
     //no need of this since we can destory them unsing env.global.stack
-    let content;
-    if (!this.virtual) content = this.storage.get(this.uid); else content = this.virtual;
+    let content = this.virtual;
+    //if (!this.virtual) content = this.storage.get(this.uid); else content = this.virtual;
 
     //pass local scope
     this.env.local = this.local;    
