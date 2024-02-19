@@ -9,6 +9,11 @@
       "src/core.js",
       "src/settings.js"
     ],
+    "minjs": [
+      "src/interpreter.js",
+      "src/core.js",
+      "src/settings.js"
+    ],    
     "autocomplete": "src/autocomplete.js",
     "important": true,
     "category": "Internal"
