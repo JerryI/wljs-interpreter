@@ -13,7 +13,9 @@
       "src/interpreter.js",
       "src/core.js",
       "src/settings.js"
-    ],    
+    ],   
+    "frontend": "src/Definitions.wl",
+    "kernel": "src/Definitions.wl", 
     "autocomplete": "src/autocomplete.js",
     "important": true,
     "category": "Internal"
