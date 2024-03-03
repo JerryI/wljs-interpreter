@@ -166,6 +166,23 @@ interpretate.contextExpand = (context) => {
   interpretate.contextes.push(context);
 }
 
+//shared libraries
+interpretate.shared = {}
+interpretate.shared = class {
+  constructor (key, loader) {
+    this.key = key;
+    const self = this;
+
+    self.load = async () => {
+      await loader(self);
+      self.load = () => {};
+    };
+
+    interpretate.shared[key] = this;
+  }
+};
+
+
 interpretate.anonymous = async (d, org) => {
   throw('Unknown symbol '+ JSON.stringify(d));
 }
