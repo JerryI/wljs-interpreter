@@ -700,6 +700,8 @@ core.AttachDOM = async(args, env) => {
 core.AttachDOM.destroy = async(args, env) => {}
 core.AttachDOM.update = async(args, env) => {}
 
+core['Global`AttachDOM'] = core.AttachDOM
+
 core.WindowScope = async(args, env) => {
     const key = interpretate(args[0]);
     return window[key];
