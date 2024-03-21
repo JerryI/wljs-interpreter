@@ -6,4 +6,7 @@ AttachDOM::usage = "AttachDOM[id_String] attach DOM with a given Id to the conta
 WindowScope::usage = "WindowScope[name_String] gets Javascript object from the global scope [Web Only]"
 Static::usage = "Static[expr_] prevents dynamic updates of a symbol [Web Only]"
 
+ReadClipboard::usage = "ReadClipboard[] reads the text content from a clipboard"
+
+
 EndPackage[]
