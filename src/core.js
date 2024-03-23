@@ -383,6 +383,13 @@ core.RandomReal = async(args, env) => {
 
 }
 
+core.Abs = async (args, env) => {
+  const d = await interpretate(args[0], env);
+  return Math.abs(d)
+}
+
+core.Abs.update = core.Abs 
+
 core.Tan = async function(args, env) {
     return Math.tan(await interpretate(args[0], env));
 }
