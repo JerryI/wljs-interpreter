@@ -383,6 +383,10 @@ core.RandomReal = async(args, env) => {
 
 }
 
+core.Tan = async function(args, env) {
+    return Math.tan(await interpretate(args[0], env));
+}
+
 core.Sin = async function(args, env) {
     return Math.sin(await interpretate(args[0], env));
 }
