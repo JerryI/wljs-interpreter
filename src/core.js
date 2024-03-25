@@ -207,6 +207,7 @@ core.FrontEndRef = core.FrontEndExecutable;
 //another alias
 core.FrontEndExecutableWrapper = core.FrontEndExecutable;
 //hold analogue for the backend
+
 core.FrontEndOnly = (args, env) => {
     return interpretate(args[0], env);
 };
@@ -225,7 +226,9 @@ core.Hold = core.FrontEndOnly;
 
 core.Dynamic = core.FrontEndOnly;
 
-core.Offload = core.FrontEndOnly;
+
+
+
 
 core.FrontDynamic = core.FrontEndOnly;
 

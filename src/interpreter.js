@@ -335,7 +335,8 @@ class ExecutableObject {
       this.storage.assign(this);
     }
 
-    if (this.env.root instanceof ExecutableObject) {
+    //if the root one is an executable & it is allowed to have non static
+    if (this.env.root instanceof ExecutableObject && !this.env.static) {
       //connecting together
       console.log('connection between two: '+this.env.root.uid + ' and a link to '+this.uid);
       this.parent = this.env.root;
